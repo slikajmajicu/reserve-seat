@@ -17,7 +17,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Trash2, Mail, Phone } from "lucide-react";
+import { Trash2, Mail, Phone, Edit } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -53,6 +62,9 @@ export default function ReservationsList() {
   const [loading, setLoading] = useState(true);
   const [selectedWorkshop, setSelectedWorkshop] = useState<string>("all");
   const [workshops, setWorkshops] = useState<any[]>([]);
+  const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
+  const [newStatus, setNewStatus] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   useEffect(() => {
     fetchWorkshops();
@@ -121,6 +133,63 @@ export default function ReservationsList() {
     }
   };
 
+  const handleStatusChange = async () => {
+    if (!editingReservation || !newStatus) return;
+
+    try {
+      const workshop = workshops.find(w => w.id === editingReservation.workshop_id);
+      if (!workshop) throw new Error("Workshop not found");
+
+      // Check if changing to confirmed and if seats available
+      if (newStatus === "confirmed") {
+        const { data: confirmedCount } = await supabase
+          .from("reservations")
+          .select("id", { count: "exact" })
+          .eq("workshop_id", editingReservation.workshop_id)
+          .eq("status", "confirmed");
+
+        const currentConfirmed = confirmedCount?.length || 0;
+        
+        if (currentConfirmed >= workshop.max_capacity && editingReservation.status !== "confirmed") {
+          toast.error("Workshop is full", {
+            description: "Cannot confirm reservation. Workshop has reached maximum capacity.",
+          });
+          return;
+        }
+
+        // Assign seat number
+        const { error } = await supabase
+          .from("reservations")
+          .update({ 
+            status: "confirmed",
+            seat_number: currentConfirmed + 1
+          })
+          .eq("id", editingReservation.id);
+
+        if (error) throw error;
+      } else {
+        // Changing to waitlisted - remove seat number
+        const { error } = await supabase
+          .from("reservations")
+          .update({ 
+            status: "waitlisted",
+            seat_number: null
+          })
+          .eq("id", editingReservation.id);
+
+        if (error) throw error;
+      }
+
+      toast.success("Status updated successfully");
+      setEditingReservation(null);
+      setNewStatus("");
+      fetchReservations();
+    } catch (error: any) {
+      toast.error("Failed to update status");
+      console.error(error);
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-8 text-muted-foreground">Loading reservations...</div>;
   }
@@ -169,8 +238,10 @@ export default function ReservationsList() {
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
-              {reservations.map((reservation) => (
+        <TableBody>
+          {reservations
+            .filter(r => statusFilter === "all" || r.status === statusFilter)
+            .map((reservation) => (
                 <TableRow key={reservation.id}>
                   <TableCell className="font-medium">
                     {reservation.first_name} {reservation.last_name}
@@ -213,28 +284,83 @@ export default function ReservationsList() {
                     {reservation.seat_number ? `#${reservation.seat_number}` : "-"}
                   </TableCell>
                   <TableCell className="text-right">
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Reservation</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete this reservation? This action cannot be
-                            undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDelete(reservation.id)}>
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    <div className="flex items-center justify-end gap-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => {
+                              setEditingReservation(reservation);
+                              setNewStatus(reservation.status);
+                            }}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Change Reservation Status</DialogTitle>
+                            <DialogDescription>
+                              Update the status for {reservation.first_name} {reservation.last_name}
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium">Current Status</label>
+                              <Badge variant={reservation.status === "confirmed" ? "default" : "secondary"}>
+                                {reservation.status}
+                              </Badge>
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium">New Status</label>
+                              <Select value={newStatus} onValueChange={setNewStatus}>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="confirmed">Confirmed</SelectItem>
+                                  <SelectItem value="waitlisted">Waitlisted</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button variant="outline" onClick={() => setEditingReservation(null)}>
+                              Cancel
+                            </Button>
+                            <Button onClick={handleStatusChange}>
+                              Update Status
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                      
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/90">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Reservation</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete this reservation? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDelete(reservation.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

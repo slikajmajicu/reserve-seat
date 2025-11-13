@@ -160,8 +160,8 @@ export default function ReservationForm() {
         console.error("Email sending failed:", emailError);
       }
 
-      toast.success("Reservation successful!", {
-        description: `You've reserved your spot for ${new Date(workshop.date).toLocaleDateString()}. Check your email for confirmation.`,
+      toast.success("You have successfully reserved your place!", {
+        description: `Workshop date: ${new Date(workshop.date).toLocaleDateString()}. We look forward to seeing you!`,
       });
 
       form.reset();

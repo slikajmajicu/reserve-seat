@@ -22,36 +22,16 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, firstName, workshopDate, status }: EmailRequest = await req.json();
+    const { email, firstName, workshopDate }: EmailRequest = await req.json();
 
-    console.log("Sending confirmation email to:", email);
-
-    const subject =
-      status === "confirmed"
-        ? "Workshop Reservation Confirmed"
-        : "You're on the Waitlist";
-
-    const htmlContent =
-      status === "confirmed"
-        ? `
-        <h1>Welcome, ${firstName}!</h1>
-        <p>You have successfully reserved your place for the workshop on <strong>${workshopDate}</strong>.</p>
-        <h2>What to expect:</h2>
-        <ul>
-          <li>Check-in starts 15 minutes before the workshop</li>
-          <li>All materials will be provided</li>
-          <li>Feel free to bring your creativity!</li>
-        </ul>
-        <p>If you have any questions, please don't hesitate to contact us.</p>
-        <p>See you soon!<br>The Workshop Team</p>
-      `
-        : `
-        <h1>Thank you, ${firstName}!</h1>
-        <p>The workshop on <strong>${workshopDate}</strong> is currently full.</p>
-        <p>We've added you to our waitlist, and we'll notify you immediately if a spot becomes available.</p>
-        <p>Thank you for your patience!</p>
-        <p>Best regards,<br>The Workshop Team</p>
-      `;
+    const subject = "Workshop Reservation Confirmed!";
+    const htmlContent = `
+      <h1>Congratulations, ${firstName}!</h1>
+      <p>You have successfully reserved your place in the workshop.</p>
+      <p><strong>Workshop Date:</strong> ${workshopDate}</p>
+      <p>We look forward to seeing you!</p>
+      <p>Best regards,<br>Workshop Team</p>
+    `;
 
     const emailResponse = await resend.emails.send({
       from: "Workshop <onboarding@resend.dev>",

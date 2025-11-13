@@ -29,6 +29,9 @@ type Workshop = {
   date: string;
   max_capacity: number;
   reserved_count: number;
+  confirmed_count?: number;
+  waitlisted_count?: number;
+  total_reservations?: number;
 };
 
 export default function WorkshopsList() {
@@ -60,17 +63,41 @@ export default function WorkshopsList() {
 
   const fetchWorkshops = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    
+    // Fetch workshops with reservation counts
+    const { data: workshopsData, error: workshopsError } = await supabase
       .from("workshops")
       .select("*")
       .order("date", { ascending: true });
 
-    if (error) {
+    if (workshopsError) {
       toast.error("Failed to load workshops");
-      console.error(error);
-    } else {
-      setWorkshops(data || []);
+      console.error(workshopsError);
+      setLoading(false);
+      return;
     }
+
+    // Fetch reservation counts for each workshop
+    const workshopsWithCounts = await Promise.all(
+      (workshopsData || []).map(async (workshop) => {
+        const { data: reservations } = await supabase
+          .from("reservations")
+          .select("status")
+          .eq("workshop_id", workshop.id);
+
+        const confirmed = reservations?.filter(r => r.status === "confirmed").length || 0;
+        const waitlisted = reservations?.filter(r => r.status === "waitlisted").length || 0;
+        
+        return {
+          ...workshop,
+          confirmed_count: confirmed,
+          waitlisted_count: waitlisted,
+          total_reservations: confirmed + waitlisted,
+        };
+      })
+    );
+
+    setWorkshops(workshopsWithCounts);
     setLoading(false);
   };
 
@@ -132,7 +159,9 @@ export default function WorkshopsList() {
           <TableRow>
             <TableHead>Date</TableHead>
             <TableHead>Capacity</TableHead>
-            <TableHead>Reserved</TableHead>
+            <TableHead>Total</TableHead>
+            <TableHead>Confirmed</TableHead>
+            <TableHead>Waitlisted</TableHead>
             <TableHead>Available</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
@@ -151,23 +180,29 @@ export default function WorkshopsList() {
 
             return (
               <TableRow key={workshop.id}>
-                <TableCell className="font-medium">{date}</TableCell>
+                <TableCell className="font-medium">
+                  {new Date(workshop.date).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </TableCell>
                 <TableCell>{workshop.max_capacity}</TableCell>
+                <TableCell>{confirmed + waitlisted}</TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    {workshop.reserved_count}
-                  </div>
+                  <Badge variant="default">{confirmed}</Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="secondary">{waitlisted}</Badge>
                 </TableCell>
                 <TableCell>{available}</TableCell>
                 <TableCell>
-                  {isFull ? (
-                    <Badge variant="destructive">Full</Badge>
-                  ) : (
-                    <Badge variant="default" className="bg-success">
-                      Open
-                    </Badge>
-                  )}
+                  <Badge 
+                    variant={isFull ? "destructive" : isFillingUp ? "secondary" : "default"}
+                    className={isFillingUp ? "bg-orange-500/10 text-orange-700 dark:text-orange-400" : ""}
+                  >
+                    {isFull ? "Full" : isFillingUp ? "Filling Up" : "Open"}
+                  </Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">

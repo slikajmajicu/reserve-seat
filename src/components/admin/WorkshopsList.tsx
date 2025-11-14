@@ -169,14 +169,12 @@ export default function WorkshopsList() {
         </TableHeader>
         <TableBody>
           {workshops.map((workshop) => {
-            const available = workshop.max_capacity - workshop.reserved_count;
+            const confirmed = workshop.confirmed_count || 0;
+            const waitlisted = workshop.waitlisted_count || 0;
+            const total = workshop.total_reservations || 0;
+            const available = workshop.max_capacity - confirmed;
             const isFull = available <= 0;
-            const date = new Date(workshop.date).toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            });
+            const isFillingUp = available <= 3 && available > 0;
 
             return (
               <TableRow key={workshop.id}>
@@ -188,7 +186,7 @@ export default function WorkshopsList() {
                   })}
                 </TableCell>
                 <TableCell>{workshop.max_capacity}</TableCell>
-                <TableCell>{confirmed + waitlisted}</TableCell>
+                <TableCell>{total}</TableCell>
                 <TableCell>
                   <Badge variant="default">{confirmed}</Badge>
                 </TableCell>

@@ -27,7 +27,7 @@ export type Database = {
           seat_number: number | null
           status: string
           tshirt_option: string
-          user_id: string | null
+          user_id: string
           workshop_id: string
         }
         Insert: {
@@ -42,7 +42,7 @@ export type Database = {
           seat_number?: number | null
           status?: string
           tshirt_option: string
-          user_id?: string | null
+          user_id?: string
           workshop_id: string
         }
         Update: {
@@ -57,7 +57,7 @@ export type Database = {
           seat_number?: number | null
           status?: string
           tshirt_option?: string
-          user_id?: string | null
+          user_id?: string
           workshop_id?: string
         }
         Relationships: [

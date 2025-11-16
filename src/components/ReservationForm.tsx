@@ -119,6 +119,16 @@ export default function ReservationForm() {
     setSubmitting(true);
 
     try {
+      // Check if user is authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Authentication required", {
+          description: "Please log in to make a reservation.",
+        });
+        setSubmitting(false);
+        return;
+      }
+
       const workshop = workshops.find((w) => w.id === values.workshopId);
       if (!workshop) {
         throw new Error("Workshop not found");
@@ -138,6 +148,7 @@ export default function ReservationForm() {
         tshirt_option: values.bringOwnTshirt ? "own" : "buy_onsite",
         status,
         seat_number: seatNumber,
+        user_id: user.id,
       });
 
       if (insertError) throw insertError;

@@ -27,7 +27,7 @@ export type Database = {
           seat_number: number | null
           status: string
           tshirt_option: string
-          user_id: string
+          user_id: string | null
           workshop_id: string
         }
         Insert: {
@@ -42,7 +42,7 @@ export type Database = {
           seat_number?: number | null
           status?: string
           tshirt_option: string
-          user_id?: string
+          user_id?: string | null
           workshop_id: string
         }
         Update: {
@@ -57,7 +57,7 @@ export type Database = {
           seat_number?: number | null
           status?: string
           tshirt_option?: string
-          user_id?: string
+          user_id?: string | null
           workshop_id?: string
         }
         Relationships: [
@@ -96,6 +96,7 @@ export type Database = {
           created_at: string
           date: string
           id: string
+          is_active: boolean
           max_capacity: number
           reserved_count: number
           updated_at: string
@@ -104,6 +105,7 @@ export type Database = {
           created_at?: string
           date: string
           id?: string
+          is_active?: boolean
           max_capacity?: number
           reserved_count?: number
           updated_at?: string
@@ -112,6 +114,7 @@ export type Database = {
           created_at?: string
           date?: string
           id?: string
+          is_active?: boolean
           max_capacity?: number
           reserved_count?: number
           updated_at?: string

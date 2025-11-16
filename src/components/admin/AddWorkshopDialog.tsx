@@ -47,6 +47,7 @@ export default function AddWorkshopDialog() {
       const { error } = await supabase.from("workshops").insert({
         date: values.date,
         max_capacity: parseInt(values.maxCapacity),
+        is_active: true,
       });
 
       if (error) throw error;

@@ -29,6 +29,7 @@ type Workshop = {
   date: string;
   max_capacity: number;
   reserved_count: number;
+  is_active: boolean;
   confirmed_count?: number;
   waitlisted_count?: number;
   total_reservations?: number;
@@ -135,8 +136,23 @@ export default function WorkshopsList() {
 
       toast.success("Export successful");
     } catch (error) {
-      console.error("Export error:", error);
-      toast.error("Failed to export data");
+      toast.error("Failed to export workshop");
+      console.error(error);
+    }
+  };
+
+  const handleToggleActive = async (id: string, currentStatus: boolean) => {
+    const { error } = await supabase
+      .from("workshops")
+      .update({ is_active: !currentStatus })
+      .eq("id", id);
+
+    if (error) {
+      toast.error("Failed to update workshop status");
+      console.error(error);
+    } else {
+      toast.success(`Workshop ${!currentStatus ? "opened" : "closed"} successfully`);
+      fetchWorkshops();
     }
   };
 
@@ -163,7 +179,8 @@ export default function WorkshopsList() {
             <TableHead>Confirmed</TableHead>
             <TableHead>Waitlisted</TableHead>
             <TableHead>Available</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead>Booking Status</TableHead>
+            <TableHead>Workshop Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -202,8 +219,20 @@ export default function WorkshopsList() {
                     {isFull ? "Full" : isFillingUp ? "Filling Up" : "Open"}
                   </Badge>
                 </TableCell>
+                <TableCell>
+                  <Badge variant={workshop.is_active ? "default" : "secondary"}>
+                    {workshop.is_active ? "Active" : "Closed"}
+                  </Badge>
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
+                    <Button
+                      variant={workshop.is_active ? "outline" : "default"}
+                      size="sm"
+                      onClick={() => handleToggleActive(workshop.id, workshop.is_active)}
+                    >
+                      {workshop.is_active ? "Close" : "Open"}
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"

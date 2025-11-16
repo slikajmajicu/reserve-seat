@@ -96,6 +96,7 @@ export default function ReservationForm() {
     const { data, error } = await supabase
       .from("workshops")
       .select("*")
+      .eq("is_active", true)
       .gte("date", new Date().toISOString().split("T")[0])
       .order("date", { ascending: true });
 
@@ -119,15 +120,8 @@ export default function ReservationForm() {
     setSubmitting(true);
 
     try {
-      // Check if user is authenticated
+      // Get user if authenticated (optional for public reservations)
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error("Authentication required", {
-          description: "Please log in to make a reservation.",
-        });
-        setSubmitting(false);
-        return;
-      }
 
       const workshop = workshops.find((w) => w.id === values.workshopId);
       if (!workshop) {
@@ -138,7 +132,7 @@ export default function ReservationForm() {
       const status = reservedCount < workshop.max_capacity ? "confirmed" : "waitlisted";
       const seatNumber = status === "confirmed" ? reservedCount + 1 : null;
 
-      const { error: insertError } = await supabase.from("reservations").insert({
+      const reservationData: any = {
         workshop_id: values.workshopId,
         first_name: values.firstName,
         last_name: values.lastName,
@@ -148,8 +142,14 @@ export default function ReservationForm() {
         tshirt_option: values.bringOwnTshirt ? "own" : "buy_onsite",
         status,
         seat_number: seatNumber,
-        user_id: user.id,
-      });
+      };
+
+      // Only include user_id if user is authenticated
+      if (user) {
+        reservationData.user_id = user.id;
+      }
+
+      const { error: insertError } = await supabase.from("reservations").insert(reservationData);
 
       if (insertError) throw insertError;
 

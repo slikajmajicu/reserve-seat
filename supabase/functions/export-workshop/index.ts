@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import ExcelJS from "npm:exceljs@4.4.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -36,44 +37,54 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Found reservations:", reservations?.length);
 
-    // Generate CSV format (simple Excel-compatible format)
-    const headers = [
-      "Seat Number",
-      "First Name",
-      "Last Name",
-      "Email",
-      "Phone Number",
-      "City",
-      "T-shirt Option",
-      "Status",
-      "Reservation Time",
+    // Create Excel workbook
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Reservations");
+
+    // Define columns
+    worksheet.columns = [
+      { header: "Name", key: "name", width: 25 },
+      { header: "Email", key: "email", width: 30 },
+      { header: "Phone Number", key: "phone", width: 20 },
+      { header: "City", key: "city", width: 20 },
+      { header: "Bringing Own Shirt", key: "shirt", width: 20 },
+      { header: "Workshop", key: "workshop", width: 30 },
+      { header: "Date", key: "date", width: 15 },
+      { header: "Timestamp", key: "timestamp", width: 25 },
     ];
 
-    const rows = reservations?.map((r: any) => [
-      r.seat_number || "-",
-      r.first_name,
-      r.last_name,
-      r.email,
-      r.phone_number,
-      r.city,
-      r.tshirt_option === "own" ? "Bringing own" : "Buy on-site",
-      r.status,
-      new Date(r.reservation_timestamp).toLocaleString(),
-    ]) || [];
+    // Style header row
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFE0E0E0" },
+    };
 
-    // Create CSV content with UTF-8 BOM for Excel compatibility
-    const csvContent = "\uFEFF" + [
-      headers.join(","),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(",")),
-    ].join("\n");
+    // Add data rows
+    reservations?.forEach((r: any) => {
+      worksheet.addRow({
+        name: `${r.first_name} ${r.last_name}`,
+        email: r.email,
+        phone: r.phone_number,
+        city: r.city,
+        shirt: r.tshirt_option === "own" ? "YES" : "NO",
+        workshop: `Workshop ${new Date(r.workshops.date).toLocaleDateString()}`,
+        date: new Date(r.workshops.date).toLocaleDateString(),
+        timestamp: new Date(r.reservation_timestamp).toLocaleString(),
+      });
+    });
 
-    console.log("Generated CSV with", rows.length, "rows");
+    // Generate Excel buffer
+    const buffer = await workbook.xlsx.writeBuffer();
 
-    return new Response(csvContent, {
+    console.log("Generated Excel with", reservations?.length, "rows");
+
+    return new Response(buffer, {
       status: 200,
       headers: {
-        "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="workshop-reservations.csv"`,
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="reservations.xlsx"`,
         ...corsHeaders,
       },
     });

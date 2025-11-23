@@ -128,6 +128,27 @@ export default function ReservationForm() {
         throw new Error("Workshop not found");
       }
 
+      // Check for duplicate email in this workshop
+      const { data: existingReservation, error: checkError } = await supabase
+        .from("reservations")
+        .select("id")
+        .eq("workshop_id", values.workshopId)
+        .eq("email", values.email)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error("Error checking for duplicates:", checkError);
+        throw checkError;
+      }
+
+      if (existingReservation) {
+        toast.error("Email already registered", {
+          description: "This email is already registered for this workshop.",
+        });
+        setSubmitting(false);
+        return;
+      }
+
       const reservedCount = workshop.reserved_count;
       const status = reservedCount < workshop.max_capacity ? "confirmed" : "waitlisted";
       const seatNumber = status === "confirmed" ? reservedCount + 1 : null;
@@ -149,11 +170,23 @@ export default function ReservationForm() {
         reservationData.user_id = user.id;
       }
 
-      const { error: insertError } = await supabase.from("reservations").insert(reservationData);
+      console.log("Creating reservation:", reservationData);
 
-      if (insertError) throw insertError;
+      const { error: insertError, data: newReservation } = await supabase
+        .from("reservations")
+        .insert(reservationData)
+        .select()
+        .single();
 
-      const { error: emailError } = await supabase.functions.invoke("send-confirmation-email", {
+      if (insertError) {
+        console.error("Insert error:", insertError);
+        throw insertError;
+      }
+
+      console.log("Reservation created successfully:", newReservation);
+
+      // Send confirmation email
+      supabase.functions.invoke("send-confirmation-email", {
         body: {
           email: values.email,
           firstName: values.firstName,
@@ -165,10 +198,47 @@ export default function ReservationForm() {
           }),
           status,
         },
+      }).catch((emailError) => {
+        console.error("Email sending failed:", emailError);
       });
 
-      if (emailError) {
-        console.error("Email sending failed:", emailError);
+      // Send admin notification
+      supabase.functions.invoke("send-admin-notification", {
+        body: {
+          firstName: values.firstName,
+          lastName: values.lastName,
+          email: values.email,
+          phoneNumber: values.phoneNumber,
+          city: values.city,
+          tshirtOption: values.bringOwnTshirt ? "own" : "buy_onsite",
+          workshopDate: new Date(workshop.date).toLocaleDateString("en-US", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }),
+          status,
+          seatNumber,
+        },
+      }).catch((notificationError) => {
+        console.error("Admin notification failed:", notificationError);
+      });
+
+      // Check if workshop is now full and send capacity alert
+      if (status === "confirmed" && reservedCount + 1 >= workshop.max_capacity) {
+        supabase.functions.invoke("send-capacity-alert", {
+          body: {
+            workshopId: values.workshopId,
+            workshopDate: new Date(workshop.date).toLocaleDateString("en-US", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }),
+          },
+        }).catch((alertError) => {
+          console.error("Capacity alert failed:", alertError);
+        });
       }
 
       toast.success("You have successfully reserved your place!", {
@@ -176,10 +246,10 @@ export default function ReservationForm() {
       });
 
       form.reset();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Reservation error:", error);
       toast.error("Reservation failed", {
-        description: "Please try again or contact support.",
+        description: error.message || "Please try again or contact support.",
       });
     } finally {
       setSubmitting(false);

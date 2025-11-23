@@ -118,13 +118,33 @@ export default function WorkshopsList() {
     try {
       const { data, error } = await supabase.functions.invoke("export-workshop", {
         body: { workshopId },
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Export error:", error);
+        throw error;
+      }
 
-      const blob = new Blob([data], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
+      console.log("Export data received:", data);
+
+      // The data from edge function is already a Blob or ArrayBuffer
+      let blob: Blob;
+      if (data instanceof Blob) {
+        blob = data;
+      } else if (data instanceof ArrayBuffer) {
+        blob = new Blob([data], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+      } else {
+        // If it's a string or other format, convert it
+        blob = new Blob([data], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+      }
+
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -135,9 +155,9 @@ export default function WorkshopsList() {
       document.body.removeChild(a);
 
       toast.success("Export successful");
-    } catch (error) {
+    } catch (error: any) {
       toast.error("Failed to export workshop");
-      console.error(error);
+      console.error("Export error details:", error);
     }
   };
 

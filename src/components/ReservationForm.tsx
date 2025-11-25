@@ -39,6 +39,8 @@ const formSchema = z.object({
 type Workshop = {
   id: string;
   date: string;
+  title: string;
+  start_time: string | null;
   max_capacity: number;
   reserved_count: number;
 };
@@ -98,7 +100,8 @@ export default function ReservationForm() {
       .select("*")
       .eq("is_active", true)
       .gte("date", new Date().toISOString().split("T")[0])
-      .order("date", { ascending: true });
+      .order("date", { ascending: true })
+      .order("start_time", { ascending: true, nullsFirst: false });
 
     if (error) {
       toast.error("Failed to load workshop dates");
@@ -186,16 +189,30 @@ export default function ReservationForm() {
       console.log("Reservation created successfully:", newReservation);
 
       // Send confirmation email
-      supabase.functions.invoke("send-confirmation-email", {
-        body: {
-          email: values.email,
-          firstName: values.firstName,
-          workshopDate: new Date(workshop.date).toLocaleDateString("en-US", {
+      const workshopDateTime = workshop.start_time
+        ? `${new Date(workshop.date).toLocaleDateString("en-US", {
             weekday: "long",
             year: "numeric",
             month: "long",
             day: "numeric",
-          }),
+          })} at ${new Date(`2000-01-01T${workshop.start_time}`).toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          })}`
+        : new Date(workshop.date).toLocaleDateString("en-US", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          });
+
+      supabase.functions.invoke("send-confirmation-email", {
+        body: {
+          email: values.email,
+          firstName: values.firstName,
+          workshopTitle: workshop.title,
+          workshopDate: workshopDateTime,
           status,
         },
       }).catch((emailError) => {
@@ -211,12 +228,8 @@ export default function ReservationForm() {
           phoneNumber: values.phoneNumber,
           city: values.city,
           tshirtOption: values.bringOwnTshirt ? "own" : "buy_onsite",
-          workshopDate: new Date(workshop.date).toLocaleDateString("en-US", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          }),
+          workshopTitle: workshop.title,
+          workshopDate: workshopDateTime,
           status,
           seatNumber,
         },
@@ -304,16 +317,27 @@ export default function ReservationForm() {
                               month: "long",
                               day: "numeric",
                             });
+                            const time = workshop.start_time
+                              ? new Date(`2000-01-01T${workshop.start_time}`).toLocaleTimeString("en-US", {
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                  hour12: true,
+                                })
+                              : null;
                             return (
                               <SelectItem key={workshop.id} value={workshop.id}>
-                                <div className="flex items-center justify-between w-full gap-4">
-                                  <span>{date}</span>
-                                  <Badge
-                                    variant={available > 0 ? "default" : "destructive"}
-                                    className="ml-2"
-                                  >
-                                    {available > 0 ? `${available} seats left` : "Full"}
-                                  </Badge>
+                                <div className="flex flex-col gap-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-semibold">{workshop.title}</span>
+                                    <Badge
+                                      variant={available > 0 ? "default" : "destructive"}
+                                    >
+                                      {available > 0 ? `${available} seats left` : "Full"}
+                                    </Badge>
+                                  </div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {date} {time && `• ${time}`}
+                                  </div>
                                 </div>
                               </SelectItem>
                             );

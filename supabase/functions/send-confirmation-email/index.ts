@@ -12,6 +12,7 @@ const corsHeaders = {
 interface EmailRequest {
   email: string;
   firstName: string;
+  workshopTitle: string;
   workshopDate: string;
   status: string;
 }
@@ -22,13 +23,14 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, firstName, workshopDate }: EmailRequest = await req.json();
+    const { email, firstName, workshopTitle, workshopDate }: EmailRequest = await req.json();
 
     const subject = "Workshop Reservation Confirmed!";
     const htmlContent = `
       <h1>Congratulations, ${firstName}!</h1>
       <p>You have successfully reserved your place in the workshop.</p>
-      <p><strong>Workshop Date:</strong> ${workshopDate}</p>
+      <p><strong>Workshop:</strong> ${workshopTitle}</p>
+      <p><strong>Date & Time:</strong> ${workshopDate}</p>
       <p>We look forward to seeing you!</p>
       <p>Best regards,<br>Workshop Team</p>
     `;

@@ -32,7 +32,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { data: reservations, error } = await supabaseClient
       .from("reservations")
-      .select("*, workshops(date)")
+      .select("*, workshops(date, title, start_time)")
       .eq("workshop_id", workshopId)
       .order("seat_number", { ascending: true });
 
@@ -51,8 +51,9 @@ const handler = async (req: Request): Promise<Response> => {
       { header: "Phone Number", key: "phone", width: 20 },
       { header: "City", key: "city", width: 20 },
       { header: "Bringing Own Shirt", key: "shirt", width: 20 },
-      { header: "Workshop", key: "workshop", width: 30 },
+      { header: "Workshop Title", key: "workshop_title", width: 30 },
       { header: "Date", key: "date", width: 15 },
+      { header: "Time", key: "time", width: 15 },
       { header: "Timestamp", key: "timestamp", width: 25 },
     ];
 
@@ -66,14 +67,23 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Add data rows
     reservations?.forEach((r: any) => {
+      const time = r.workshops.start_time
+        ? new Date(`2000-01-01T${r.workshops.start_time}`).toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          })
+        : "-";
+
       worksheet.addRow({
         name: `${r.first_name} ${r.last_name}`,
         email: r.email,
         phone: r.phone_number,
         city: r.city,
         shirt: r.tshirt_option === "own" ? "YES" : "NO",
-        workshop: `Workshop ${new Date(r.workshops.date).toLocaleDateString()}`,
+        workshop_title: r.workshops.title || "Workshop Session",
         date: new Date(r.workshops.date).toLocaleDateString(),
+        time: time,
         timestamp: new Date(r.reservation_timestamp).toLocaleString(),
       });
     });

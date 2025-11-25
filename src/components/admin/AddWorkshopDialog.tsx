@@ -26,6 +26,8 @@ import { Plus, Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   date: z.string().min(1, "Date is required"),
+  title: z.string().min(1, "Title is required").max(200),
+  startTime: z.string().optional(),
   maxCapacity: z.string().min(1, "Capacity is required"),
 });
 
@@ -37,6 +39,8 @@ export default function AddWorkshopDialog() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       date: "",
+      title: "Workshop Session",
+      startTime: "",
       maxCapacity: "10",
     },
   });
@@ -44,11 +48,19 @@ export default function AddWorkshopDialog() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setLoading(true);
     try {
-      const { error } = await supabase.from("workshops").insert({
+      const workshopData: any = {
         date: values.date,
+        title: values.title,
         max_capacity: parseInt(values.maxCapacity),
         is_active: true,
-      });
+      };
+
+      // Only add start_time if provided
+      if (values.startTime) {
+        workshopData.start_time = values.startTime;
+      }
+
+      const { error } = await supabase.from("workshops").insert(workshopData);
 
       if (error) throw error;
 
@@ -74,13 +86,27 @@ export default function AddWorkshopDialog() {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add New Workshop Date</DialogTitle>
+          <DialogTitle>Add New Workshop</DialogTitle>
           <DialogDescription>
-            Create a new workshop date with a specified capacity (default: 10 seats)
+            Create a new workshop with title, date, time, and capacity
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Workshop Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Morning Session" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="date"
@@ -89,6 +115,20 @@ export default function AddWorkshopDialog() {
                   <FormLabel>Workshop Date</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="startTime"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Start Time (Optional)</FormLabel>
+                  <FormControl>
+                    <Input type="time" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

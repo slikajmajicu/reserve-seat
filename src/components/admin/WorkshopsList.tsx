@@ -27,6 +27,8 @@ import {
 type Workshop = {
   id: string;
   date: string;
+  title: string;
+  start_time: string | null;
   max_capacity: number;
   reserved_count: number;
   is_active: boolean;
@@ -69,7 +71,8 @@ export default function WorkshopsList() {
     const { data: workshopsData, error: workshopsError } = await supabase
       .from("workshops")
       .select("*")
-      .order("date", { ascending: true });
+      .order("date", { ascending: true })
+      .order("start_time", { ascending: true, nullsFirst: false });
 
     if (workshopsError) {
       toast.error("Failed to load workshops");
@@ -193,7 +196,9 @@ export default function WorkshopsList() {
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>Title</TableHead>
             <TableHead>Date</TableHead>
+            <TableHead>Time</TableHead>
             <TableHead>Capacity</TableHead>
             <TableHead>Total</TableHead>
             <TableHead>Confirmed</TableHead>
@@ -215,12 +220,26 @@ export default function WorkshopsList() {
 
             return (
               <TableRow key={workshop.id}>
+                <TableCell className="font-semibold">{workshop.title}</TableCell>
                 <TableCell className="font-medium">
                   {new Date(workshop.date).toLocaleDateString("en-US", {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
                   })}
+                </TableCell>
+                <TableCell>
+                  {workshop.start_time ? (
+                    <Badge variant="outline">
+                      {new Date(`2000-01-01T${workshop.start_time}`).toLocaleTimeString("en-US", {
+                        hour: "numeric",
+                        minute: "2-digit",
+                        hour12: true,
+                      })}
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground">-</span>
+                  )}
                 </TableCell>
                 <TableCell>{workshop.max_capacity}</TableCell>
                 <TableCell>{total}</TableCell>

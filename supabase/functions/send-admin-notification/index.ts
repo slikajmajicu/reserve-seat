@@ -16,6 +16,7 @@ interface NotificationRequest {
   phoneNumber: string;
   city: string;
   tshirtOption: string;
+  workshopTitle: string;
   workshopDate: string;
   status: string;
   seatNumber?: number;
@@ -59,7 +60,8 @@ const handler = async (req: Request): Promise<Response> => {
         <p><strong>T-Shirt Option:</strong> ${data.tshirtOption}</p>
         <hr>
         <h2>Workshop Information:</h2>
-        <p><strong>Date:</strong> ${data.workshopDate}</p>
+        <p><strong>Title:</strong> ${data.workshopTitle}</p>
+        <p><strong>Date & Time:</strong> ${data.workshopDate}</p>
         <p><strong>Status:</strong> ${data.status.toUpperCase()}</p>
         ${seatInfo}
         <hr>

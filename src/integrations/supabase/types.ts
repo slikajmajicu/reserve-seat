@@ -99,6 +99,8 @@ export type Database = {
           is_active: boolean
           max_capacity: number
           reserved_count: number
+          start_time: string | null
+          title: string | null
           updated_at: string
         }
         Insert: {
@@ -108,6 +110,8 @@ export type Database = {
           is_active?: boolean
           max_capacity?: number
           reserved_count?: number
+          start_time?: string | null
+          title?: string | null
           updated_at?: string
         }
         Update: {
@@ -117,6 +121,8 @@ export type Database = {
           is_active?: boolean
           max_capacity?: number
           reserved_count?: number
+          start_time?: string | null
+          title?: string | null
           updated_at?: string
         }
         Relationships: []

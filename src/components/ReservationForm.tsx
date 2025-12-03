@@ -45,10 +45,14 @@ type Workshop = {
   reserved_count: number;
 };
 
+import { User } from "@supabase/supabase-js";
+
 export default function ReservationForm() {
   const [workshops, setWorkshops] = useState<Workshop[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -69,6 +73,24 @@ export default function ReservationForm() {
     ? selectedWorkshop.max_capacity - selectedWorkshop.reserved_count
     : 0;
   const isFull = availableSeats <= 0;
+
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null);
+        setAuthLoading(false);
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     fetchWorkshops();
@@ -113,6 +135,13 @@ export default function ReservationForm() {
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!user) {
+      toast.error("Authentication required", {
+        description: "Please sign in to make a reservation.",
+      });
+      return;
+    }
+
     if (isFull) {
       toast.error("This workshop is full", {
         description: "Please select another date or check back later.",
@@ -123,9 +152,6 @@ export default function ReservationForm() {
     setSubmitting(true);
 
     try {
-      // Get user if authenticated (optional for public reservations)
-      const { data: { user } } = await supabase.auth.getUser();
-
       const workshop = workshops.find((w) => w.id === values.workshopId);
       if (!workshop) {
         throw new Error("Workshop not found");
@@ -156,7 +182,8 @@ export default function ReservationForm() {
       const status = reservedCount < workshop.max_capacity ? "confirmed" : "waitlisted";
       const seatNumber = status === "confirmed" ? reservedCount + 1 : null;
 
-      const reservationData: any = {
+      // Always include user_id - required for RLS
+      const reservationData = {
         workshop_id: values.workshopId,
         first_name: values.firstName,
         last_name: values.lastName,
@@ -166,12 +193,8 @@ export default function ReservationForm() {
         tshirt_option: values.bringOwnTshirt ? "own" : "buy_onsite",
         status,
         seat_number: seatNumber,
+        user_id: user.id,
       };
-
-      // Only include user_id if user is authenticated
-      if (user) {
-        reservationData.user_id = user.id;
-      }
 
       console.log("Creating reservation:", reservationData);
 
@@ -268,6 +291,42 @@ export default function ReservationForm() {
       setSubmitting(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 py-12 px-4 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 py-12 px-4">
+        <div className="max-w-md mx-auto">
+          <Card className="shadow-lg">
+            <CardHeader className="text-center">
+              <CardTitle className="flex items-center justify-center gap-2">
+                <AlertCircle className="h-5 w-5 text-primary" />
+                Sign In Required
+              </CardTitle>
+              <CardDescription>
+                Please sign in to make a workshop reservation
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-muted-foreground">
+                You need to be signed in to reserve your spot for a workshop.
+              </p>
+              <Button asChild className="w-full">
+                <a href="/auth">Sign In to Continue</a>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 py-12 px-4">

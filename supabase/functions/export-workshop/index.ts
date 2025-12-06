@@ -12,12 +12,72 @@ interface ExportRequest {
   workshopId: string;
 }
 
+const verifyAdminAuth = async (req: Request): Promise<{ authenticated: boolean; isAdmin: boolean; userId?: string }> => {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return { authenticated: false, isAdmin: false };
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  
+  // First verify the user with anon key
+  const supabaseAnon = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+  );
+
+  const { data: { user }, error } = await supabaseAnon.auth.getUser(token);
+  
+  if (error || !user) {
+    return { authenticated: false, isAdmin: false };
+  }
+
+  // Use service role to check admin status (bypasses RLS)
+  const supabaseService = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+  );
+
+  const { data: roleData, error: roleError } = await supabaseService
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .eq("role", "admin")
+    .maybeSingle();
+
+  if (roleError) {
+    console.error("Error checking admin role:", roleError);
+    return { authenticated: true, isAdmin: false, userId: user.id };
+  }
+
+  return { authenticated: true, isAdmin: !!roleData, userId: user.id };
+};
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Verify authentication AND admin role
+    const { authenticated, isAdmin } = await verifyAdminAuth(req);
+    
+    if (!authenticated) {
+      console.error("Unauthorized request to export-workshop");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (!isAdmin) {
+      console.error("Non-admin user attempted to export workshop data");
+      return new Response(
+        JSON.stringify({ error: "Forbidden: Admin access required" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     const body = await req.text();
     console.log("Received body:", body);
     

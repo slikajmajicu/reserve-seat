@@ -15,12 +15,44 @@ interface CapacityAlertRequest {
   workshopDate: string;
 }
 
+const verifyAuth = async (req: Request): Promise<{ authenticated: boolean; userId?: string }> => {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return { authenticated: false };
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+  );
+
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  
+  if (error || !user) {
+    return { authenticated: false };
+  }
+
+  return { authenticated: true, userId: user.id };
+};
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Verify authentication
+    const { authenticated } = await verifyAuth(req);
+    if (!authenticated) {
+      console.error("Unauthorized request to send-capacity-alert");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     const { workshopId, workshopDate }: CapacityAlertRequest = await req.json();
 
     const adminEmail = Deno.env.get("ADMIN_EMAIL");
@@ -35,7 +67,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Initialize Supabase client
+    // Initialize Supabase client with service role for data access
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);

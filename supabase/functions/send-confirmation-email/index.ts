@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -17,12 +18,44 @@ interface EmailRequest {
   status: string;
 }
 
+const verifyAuth = async (req: Request): Promise<{ authenticated: boolean; userId?: string }> => {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return { authenticated: false };
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+  );
+
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  
+  if (error || !user) {
+    return { authenticated: false };
+  }
+
+  return { authenticated: true, userId: user.id };
+};
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Verify authentication
+    const { authenticated } = await verifyAuth(req);
+    if (!authenticated) {
+      console.error("Unauthorized request to send-confirmation-email");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     const { email, firstName, workshopTitle, workshopDate }: EmailRequest = await req.json();
 
     const subject = "Workshop Reservation Confirmed!";

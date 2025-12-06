@@ -78,10 +78,8 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const body = await req.text();
-    console.log("Received body:", body);
-    
-    const { workshopId }: ExportRequest = JSON.parse(body);
+    const { workshopId }: ExportRequest = await req.json();
+    console.log("Received workshopId:", workshopId);
 
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",

@@ -284,9 +284,23 @@ export default function ReservationForm() {
       form.reset();
     } catch (error: any) {
       console.error("Reservation error:", error);
-      toast.error("Reservation failed", {
-        description: error.message || "Please try again or contact support.",
-      });
+      
+      // Handle specific error messages from database triggers
+      let errorTitle = "Reservation failed";
+      let errorDescription = error.message || "Please try again or contact support.";
+      
+      if (error.message?.includes("Email must be verified")) {
+        errorTitle = "Email verification required";
+        errorDescription = "Please verify your email address before making a reservation. Check your inbox for the verification link.";
+      } else if (error.message?.includes("Rate limit exceeded")) {
+        errorTitle = "Too many reservations";
+        errorDescription = "You have exceeded the maximum of 5 reservations per hour. Please wait before trying again.";
+      } else if (error.message?.includes("row-level security")) {
+        errorTitle = "Authorization error";
+        errorDescription = "You don't have permission to perform this action. Please sign in again.";
+      }
+      
+      toast.error(errorTitle, { description: errorDescription });
     } finally {
       setSubmitting(false);
     }

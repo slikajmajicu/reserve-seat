@@ -44,6 +44,24 @@ export type Database = {
         }
         Relationships: []
       }
+      reservation_rate_limits: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       reservations: {
         Row: {
           city: string
@@ -169,6 +187,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_email_verified: { Args: { user_id_param: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"

@@ -60,7 +60,7 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     // Verify authentication AND admin role
-    const { authenticated, isAdmin } = await verifyAdminAuth(req);
+    const { authenticated, isAdmin, userId } = await verifyAdminAuth(req);
     
     if (!authenticated) {
       console.error("Unauthorized request to export-workshop");
@@ -97,6 +97,20 @@ const handler = async (req: Request): Promise<Response> => {
     if (error) throw error;
 
     console.log("Found reservations:", reservations?.length);
+
+    // Log PII access for audit trail
+    if (userId && reservations && reservations.length > 0) {
+      await supabaseClient
+        .from("pii_access_log")
+        .insert({
+          admin_user_id: userId,
+          action: "reservations_export",
+          table_name: "reservations",
+          record_count: reservations.length,
+          metadata: { workshop_id: workshopId }
+        });
+      console.log("PII access logged for admin:", userId);
+    }
 
     // Create Excel workbook
     const workbook = new ExcelJS.Workbook();

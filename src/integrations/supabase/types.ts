@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      pii_access_log: {
+        Row: {
+          action: string
+          admin_user_id: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          record_count: number | null
+          table_name: string
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          admin_user_id: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          record_count?: number | null
+          table_name: string
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          admin_user_id?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          record_count?: number | null
+          table_name?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -188,6 +224,15 @@ export type Database = {
         Returns: boolean
       }
       is_email_verified: { Args: { user_id_param: string }; Returns: boolean }
+      log_pii_access: {
+        Args: {
+          p_action: string
+          p_metadata?: Json
+          p_record_count?: number
+          p_table_name: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "user"

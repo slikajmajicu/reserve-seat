@@ -113,6 +113,19 @@ export default function ReservationsList() {
       console.error(error);
     } else {
       setReservations(data || []);
+      
+      // Log PII access for audit trail (admin viewing reservations)
+      if (data && data.length > 0) {
+        supabase.from("pii_access_log").insert({
+          admin_user_id: (await supabase.auth.getUser()).data.user?.id,
+          action: "view_all_reservations",
+          table_name: "reservations",
+          record_count: data.length,
+          metadata: { filter_workshop: selectedWorkshop }
+        }).then(({ error: logError }) => {
+          if (logError) console.error("Failed to log PII access:", logError);
+        });
+      }
     }
     setLoading(false);
   };

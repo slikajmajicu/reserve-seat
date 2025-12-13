@@ -45,8 +45,8 @@ All colors MUST be HSL.
     --radius: 0.75rem;
 
     /* Font families */
-    --font-heading: 'TAN Nimbus', 'Georgia', serif;
-    --font-body: 'Horizon', 'Helvetica Neue', sans-serif;
+    --font-heading: 'Montserrat', sans-serif;
+    --font-body: 'Montserrat', sans-serif;
   }
 
   .dark {

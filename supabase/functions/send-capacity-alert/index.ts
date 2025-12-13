@@ -15,10 +15,10 @@ interface CapacityAlertRequest {
   workshopDate: string;
 }
 
-const verifyAuth = async (req: Request): Promise<{ authenticated: boolean; userId?: string }> => {
+const verifyAdminAuth = async (req: Request): Promise<{ authenticated: boolean; isAdmin: boolean; userId?: string }> => {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return { authenticated: false };
+    return { authenticated: false, isAdmin: false };
   }
 
   const token = authHeader.replace("Bearer ", "");
@@ -31,10 +31,23 @@ const verifyAuth = async (req: Request): Promise<{ authenticated: boolean; userI
   const { data: { user }, error } = await supabase.auth.getUser(token);
   
   if (error || !user) {
-    return { authenticated: false };
+    return { authenticated: false, isAdmin: false };
   }
 
-  return { authenticated: true, userId: user.id };
+  // Verify admin role using service role key
+  const supabaseService = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+  );
+
+  const { data: roleData } = await supabaseService
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .eq("role", "admin")
+    .maybeSingle();
+
+  return { authenticated: true, isAdmin: !!roleData, userId: user.id };
 };
 
 const handler = async (req: Request): Promise<Response> => {
@@ -43,13 +56,21 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Verify authentication
-    const { authenticated } = await verifyAuth(req);
+    // Verify authentication and admin role
+    const { authenticated, isAdmin } = await verifyAdminAuth(req);
     if (!authenticated) {
       console.error("Unauthorized request to send-capacity-alert");
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (!isAdmin) {
+      console.error("Non-admin user attempted to trigger capacity alert");
+      return new Response(
+        JSON.stringify({ error: "Forbidden: Admin role required" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 

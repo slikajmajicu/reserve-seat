@@ -61,19 +61,61 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const data: NotificationRequest = await req.json();
+    const body = await req.json();
+    const data = body as NotificationRequest;
+    
+    // Input validation
+    if (!data.email || typeof data.email !== 'string' || !data.email.includes('@') || data.email.length > 255) {
+      return new Response(
+        JSON.stringify({ error: "Invalid email address" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
+    if (!data.firstName || typeof data.firstName !== 'string' || data.firstName.length > 100) {
+      return new Response(
+        JSON.stringify({ error: "Invalid first name" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
+    if (!data.lastName || typeof data.lastName !== 'string' || data.lastName.length > 100) {
+      return new Response(
+        JSON.stringify({ error: "Invalid last name" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
+    if (!data.phoneNumber || typeof data.phoneNumber !== 'string' || data.phoneNumber.length > 30) {
+      return new Response(
+        JSON.stringify({ error: "Invalid phone number" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
+    if (!data.city || typeof data.city !== 'string' || data.city.length > 100) {
+      return new Response(
+        JSON.stringify({ error: "Invalid city" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     const adminEmail = Deno.env.get("ADMIN_EMAIL");
     if (!adminEmail) {
       console.error("ADMIN_EMAIL not configured");
       return new Response(
-        JSON.stringify({ error: "Admin email not configured" }),
+        JSON.stringify({ error: "Server configuration error" }),
         {
           status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         }
       );
     }
+
+    // Sanitize inputs for HTML email
+    const sanitize = (str: string) => str.replace(/[<>&"']/g, c => 
+      ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c] || c)
+    );
 
     const seatInfo = data.seatNumber 
       ? `<p><strong>Seat Number:</strong> ${data.seatNumber}</p>`
@@ -82,20 +124,20 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "Workshop Notifications <onboarding@resend.dev>",
       to: [adminEmail],
-      subject: `New Workshop Reservation - ${data.firstName} ${data.lastName}`,
+      subject: `New Workshop Reservation - ${sanitize(data.firstName)} ${sanitize(data.lastName)}`,
       html: `
         <h1>New Workshop Reservation Received</h1>
         <h2>Participant Details:</h2>
-        <p><strong>Name:</strong> ${data.firstName} ${data.lastName}</p>
-        <p><strong>Email:</strong> ${data.email}</p>
-        <p><strong>Phone:</strong> ${data.phoneNumber}</p>
-        <p><strong>City:</strong> ${data.city}</p>
-        <p><strong>T-Shirt Option:</strong> ${data.tshirtOption}</p>
+        <p><strong>Name:</strong> ${sanitize(data.firstName)} ${sanitize(data.lastName)}</p>
+        <p><strong>Email:</strong> ${sanitize(data.email)}</p>
+        <p><strong>Phone:</strong> ${sanitize(data.phoneNumber)}</p>
+        <p><strong>City:</strong> ${sanitize(data.city)}</p>
+        <p><strong>T-Shirt Option:</strong> ${sanitize(data.tshirtOption || '')}</p>
         <hr>
         <h2>Workshop Information:</h2>
-        <p><strong>Title:</strong> ${data.workshopTitle}</p>
-        <p><strong>Date & Time:</strong> ${data.workshopDate}</p>
-        <p><strong>Status:</strong> ${data.status.toUpperCase()}</p>
+        <p><strong>Title:</strong> ${sanitize(data.workshopTitle || '')}</p>
+        <p><strong>Date & Time:</strong> ${sanitize(data.workshopDate || '')}</p>
+        <p><strong>Status:</strong> ${sanitize((data.status || '').toUpperCase())}</p>
         ${seatInfo}
         <hr>
         <p><a href="${Deno.env.get("VITE_SUPABASE_URL") || "your-app-url"}/admin">View in Admin Dashboard</a></p>
@@ -114,7 +156,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in send-admin-notification:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "An internal error occurred. Please try again later." }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

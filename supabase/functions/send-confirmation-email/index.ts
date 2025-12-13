@@ -56,14 +56,50 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { email, firstName, workshopTitle, workshopDate }: EmailRequest = await req.json();
+    const body = await req.json();
+    
+    // Input validation
+    const { email, firstName, workshopTitle, workshopDate } = body as EmailRequest;
+    
+    if (!email || typeof email !== 'string' || !email.includes('@') || email.length > 255) {
+      return new Response(
+        JSON.stringify({ error: "Invalid email address" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
+    if (!firstName || typeof firstName !== 'string' || firstName.length > 100) {
+      return new Response(
+        JSON.stringify({ error: "Invalid first name" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
+    if (!workshopTitle || typeof workshopTitle !== 'string' || workshopTitle.length > 200) {
+      return new Response(
+        JSON.stringify({ error: "Invalid workshop title" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
+    if (!workshopDate || typeof workshopDate !== 'string') {
+      return new Response(
+        JSON.stringify({ error: "Invalid workshop date" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Sanitize inputs for HTML email
+    const sanitize = (str: string) => str.replace(/[<>&"']/g, c => 
+      ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c] || c)
+    );
 
     const subject = "Workshop Reservation Confirmed!";
     const htmlContent = `
-      <h1>Congratulations, ${firstName}!</h1>
+      <h1>Congratulations, ${sanitize(firstName)}!</h1>
       <p>You have successfully reserved your place in the workshop.</p>
-      <p><strong>Workshop:</strong> ${workshopTitle}</p>
-      <p><strong>Date & Time:</strong> ${workshopDate}</p>
+      <p><strong>Workshop:</strong> ${sanitize(workshopTitle)}</p>
+      <p><strong>Date & Time:</strong> ${sanitize(workshopDate)}</p>
       <p>We look forward to seeing you!</p>
       <p>Best regards,<br>Workshop Team</p>
     `;
@@ -87,7 +123,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in send-confirmation-email function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "An internal error occurred. Please try again later." }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

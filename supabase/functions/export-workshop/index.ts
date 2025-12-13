@@ -78,7 +78,18 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { workshopId }: ExportRequest = await req.json();
+    const body = await req.json();
+    const { workshopId } = body as ExportRequest;
+    
+    // Input validation - workshopId should be a valid UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!workshopId || typeof workshopId !== 'string' || !uuidRegex.test(workshopId)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid workshop ID" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
     console.log("Received workshopId:", workshopId);
 
     const supabaseClient = createClient(
@@ -176,7 +187,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in export-workshop function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "An internal error occurred. Please try again later." }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

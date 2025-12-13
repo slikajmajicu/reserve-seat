@@ -74,13 +74,30 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { workshopId, workshopDate }: CapacityAlertRequest = await req.json();
+    const body = await req.json();
+    const { workshopId, workshopDate } = body as CapacityAlertRequest;
+    
+    // Input validation - workshopId should be a valid UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!workshopId || typeof workshopId !== 'string' || !uuidRegex.test(workshopId)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid workshop ID" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
+    if (!workshopDate || typeof workshopDate !== 'string' || workshopDate.length > 100) {
+      return new Response(
+        JSON.stringify({ error: "Invalid workshop date" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     const adminEmail = Deno.env.get("ADMIN_EMAIL");
     if (!adminEmail) {
       console.error("ADMIN_EMAIL not configured");
       return new Response(
-        JSON.stringify({ error: "Admin email not configured" }),
+        JSON.stringify({ error: "Server configuration error" }),
         {
           status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -105,6 +122,11 @@ const handler = async (req: Request): Promise<Response> => {
       throw error;
     }
 
+    // Sanitize for email
+    const sanitize = (str: string) => str.replace(/[<>&"']/g, c => 
+      ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c] || c)
+    );
+
     // Generate CSV content
     const csvHeader = "Seat Number,First Name,Last Name,Email,Phone Number,City,T-Shirt Option\n";
     const csvRows = reservations?.map(r => 
@@ -119,20 +141,20 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "Workshop Notifications <onboarding@resend.dev>",
       to: [adminEmail],
-      subject: `Workshop Full - ${workshopDate}`,
+      subject: `Workshop Full - ${sanitize(workshopDate)}`,
       html: `
         <h1>Workshop Capacity Reached</h1>
-        <p>The workshop scheduled for <strong>${workshopDate}</strong> has reached its maximum capacity of 10 confirmed participants.</p>
+        <p>The workshop scheduled for <strong>${sanitize(workshopDate)}</strong> has reached its maximum capacity of 10 confirmed participants.</p>
         <p>Please find the attached Excel file with all confirmed participants.</p>
         <h2>Summary:</h2>
-        <p><strong>Workshop Date:</strong> ${workshopDate}</p>
+        <p><strong>Workshop Date:</strong> ${sanitize(workshopDate)}</p>
         <p><strong>Confirmed Participants:</strong> ${reservations?.length || 0}</p>
         <hr>
         <p><a href="${Deno.env.get("VITE_SUPABASE_URL") || "your-app-url"}/admin">View in Admin Dashboard</a></p>
       `,
       attachments: [
         {
-          filename: `workshop_${workshopDate}_participants.csv`,
+          filename: `workshop_${workshopDate.replace(/[^a-zA-Z0-9]/g, '_')}_participants.csv`,
           content: csvBase64,
         },
       ],
@@ -150,7 +172,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in send-capacity-alert:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "An internal error occurred. Please try again later." }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -17,7 +13,7 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 189 94% 43%;
+    --primary: 222 47% 11%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 240 4.8% 95.9%;
@@ -26,71 +22,50 @@ All colors MUST be HSL.
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 215 16.3% 46.9%;
 
-    --accent: 27 96% 61%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 222 47% 11%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 189 94% 43%;
+    --ring: 222 47% 11%;
 
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 100%;
+    --radius: 0.5rem;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-
-    --checkbox: 81 74% 45%;
-    --checkbox-hover: 81 74% 38%;
-    --checkbox-foreground: 0 0% 0%;
-
-    --radius: 0.75rem;
-
-    /* Font families */
     --font-heading: 'Montserrat', sans-serif;
     --font-body: 'Montserrat', sans-serif;
   }
 
   .dark {
-    --background: 222 47% 8%;
-    --foreground: 210 40% 96%;
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
 
     --card: 222 47% 11%;
-    --card-foreground: 210 40% 96%;
+    --card-foreground: 210 40% 98%;
 
     --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 96%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 189 94% 50%;
-    --primary-foreground: 222 47% 8%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222 47% 11%;
 
-    --secondary: 215 28% 17%;
-    --secondary-foreground: 210 40% 96%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 215 28% 17%;
-    --muted-foreground: 217.9 10.6% 64.9%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 27 96% 61%;
-    --accent-foreground: 222 47% 8%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 62% 30%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 215 28% 20%;
-    --input: 215 28% 20%;
-    --ring: 189 94% 50%;
-
-    --success: 142 76% 42%;
-    --success-foreground: 222 47% 8%;
-
-    --warning: 38 92% 50%;
-    --warning-foreground: 222 47% 8%;
-
-    --checkbox: 81 74% 60%;
-    --checkbox-hover: 81 74% 50%;
-    --checkbox-foreground: 0 0% 0%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 212 95% 68%;
   }
 }
 
@@ -102,17 +77,9 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
-    background-image: url('@/assets/paper-texture.jpg');
-    background-repeat: repeat;
-    background-size: 512px 512px;
-  }
-
-  .dark body {
-    background-image: none;
   }
 
   h1, h2, h3, h4, h5, h6, .font-heading {
     font-family: var(--font-heading);
-    letter-spacing: 0.02em;
   }
 }

@@ -61,6 +61,7 @@ export default {
         },
         checkbox: {
           DEFAULT: "hsl(var(--checkbox))",
+          hover: "hsl(var(--checkbox-hover))",
           foreground: "hsl(var(--checkbox-foreground))",
         },
       },

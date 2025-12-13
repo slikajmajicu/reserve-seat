@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        heading: ['TAN Nimbus', 'Georgia', 'serif'],
-        body: ['Horizon', 'Helvetica Neue', 'sans-serif'],
+        heading: ['Montserrat', 'sans-serif'],
+        body: ['Montserrat', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",

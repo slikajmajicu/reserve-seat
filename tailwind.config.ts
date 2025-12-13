@@ -51,19 +51,7 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        success: {
-          DEFAULT: "hsl(var(--success))",
-          foreground: "hsl(var(--success-foreground))",
-        },
-        warning: {
-          DEFAULT: "hsl(var(--warning))",
-          foreground: "hsl(var(--warning-foreground))",
-        },
-        checkbox: {
-          DEFAULT: "hsl(var(--checkbox))",
-          hover: "hsl(var(--checkbox-hover))",
-          foreground: "hsl(var(--checkbox-foreground))",
-        },
+      },
       },
       borderRadius: {
         lg: "var(--radius)",

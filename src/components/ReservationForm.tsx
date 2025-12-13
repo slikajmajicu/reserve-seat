@@ -330,16 +330,16 @@ export default function ReservationForm() {
   return <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 py-12 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2 text-foreground font-heading">Workshop Reservation</h1>
-          <p className="text-muted-foreground text-lg font-body">
+          <h1 className="mb-2 text-foreground font-heading font-extrabold text-5xl">Workshop Reservation</h1>
+          <p className="text-muted-foreground text-lg font-body bg-primary-foreground">
             Reserve your spot for our upcoming creative workshops
           </p>
         </div>
 
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 font-heading">
-              <Calendar className="h-5 w-5 text-primary" />
+            <CardTitle className="flex items-center gap-2 font-heading text-[#afe250]">
+              <Calendar className="h-5 w-5 text-[#afe250]" />
               Book Your Workshop
             </CardTitle>
             <CardDescription className="font-body">
@@ -486,7 +486,7 @@ export default function ReservationForm() {
                       </div>
                     </FormItem>} />
 
-                <Button type="submit" disabled={submitting || !selectedWorkshop || isFull} className="w-full h-12 text-base font-extrabold">
+                <Button type="submit" disabled={submitting || !selectedWorkshop || isFull} className="w-full h-12 text-base font-extrabold text-primary-foreground bg-[#afe250]">
                   {submitting ? <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Reserving...

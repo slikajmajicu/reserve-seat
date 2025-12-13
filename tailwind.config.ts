@@ -59,6 +59,10 @@ export default {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
         },
+        checkbox: {
+          DEFAULT: "hsl(var(--checkbox))",
+          foreground: "hsl(var(--checkbox-foreground))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -14,6 +14,24 @@ export default function Admin() {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  const checkAdminRole = async (userId: string) => {
+    const { data: roleData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('role', 'admin')
+      .maybeSingle();
+
+    if (!roleData) {
+      toast.error('Access denied: Admin privileges required');
+      navigate('/');
+      return false;
+    }
+    setIsAdmin(true);
+    return true;
+  };
 
   useEffect(() => {
     checkUser();
@@ -23,7 +41,14 @@ export default function Admin() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setUser(session.user);
-        setLoading(false);
+        // Defer admin check to avoid Supabase deadlock
+        setTimeout(() => {
+          checkAdminRole(session.user.id).then((isAdminUser) => {
+            if (isAdminUser) {
+              setLoading(false);
+            }
+          });
+        }, 0);
       } else {
         navigate("/admin/login");
       }
@@ -39,10 +64,13 @@ export default function Admin() {
     
     if (session?.user) {
       setUser(session.user);
+      const isAdminUser = await checkAdminRole(session.user.id);
+      if (isAdminUser) {
+        setLoading(false);
+      }
     } else {
       navigate("/admin/login");
     }
-    setLoading(false);
   };
 
   const handleLogout = async () => {

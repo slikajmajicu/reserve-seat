@@ -331,7 +331,7 @@ export default function ReservationForm() {
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="mb-2 text-foreground font-heading font-extrabold text-5xl">Workshop Reservation</h1>
-          <p className="text-muted-foreground text-lg font-body bg-primary-foreground">
+          <p className="text-muted-foreground text-lg font-body bg-inherit">
             Reserve your spot for our upcoming creative workshops
           </p>
         </div>

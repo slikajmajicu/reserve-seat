@@ -42,7 +42,8 @@ All colors MUST be HSL.
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --checkbox: 81 74% 60%;
+    --checkbox: 81 74% 45%;
+    --checkbox-hover: 81 74% 38%;
     --checkbox-foreground: 0 0% 0%;
 
     --radius: 0.75rem;
@@ -88,6 +89,7 @@ All colors MUST be HSL.
     --warning-foreground: 222 47% 8%;
 
     --checkbox: 81 74% 60%;
+    --checkbox-hover: 81 74% 50%;
     --checkbox-foreground: 0 0% 0%;
   }
 }
@@ -100,6 +102,13 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
+    background-image: url('@/assets/paper-texture.jpg');
+    background-repeat: repeat;
+    background-size: 512px 512px;
+  }
+
+  .dark body {
+    background-image: none;
   }
 
   h1, h2, h3, h4, h5, h6, .font-heading {

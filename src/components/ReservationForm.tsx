@@ -338,8 +338,8 @@ export default function ReservationForm() {
 
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 font-heading text-[#afe250]">
-              <Calendar className="h-5 w-5 text-[#afe250]" />
+            <CardTitle className="flex items-center gap-2 font-heading text-primary">
+              <Calendar className="h-5 w-5 border-destructive-foreground text-primary-foreground bg-primary-foreground" />
               Book Your Workshop
             </CardTitle>
             <CardDescription className="font-body">
@@ -486,7 +486,7 @@ export default function ReservationForm() {
                       </div>
                     </FormItem>} />
 
-                <Button type="submit" disabled={submitting || !selectedWorkshop || isFull} className="w-full h-12 text-base font-extrabold text-primary-foreground bg-[#afe250]">
+                <Button type="submit" disabled={submitting || !selectedWorkshop || isFull} className="w-full h-12 text-base font-extrabold text-primary-foreground bg-primary">
                   {submitting ? <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Reserving...

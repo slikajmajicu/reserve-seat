@@ -93,10 +93,10 @@ export default function Admin() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Calendar className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">Workshop Admin</h1>
+            <h1 className="text-2xl font-bold font-heading">Workshop Admin</h1>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">{user?.email}</span>
+            <span className="text-sm text-muted-foreground font-body">{user?.email}</span>
             <Button onClick={handleLogout} variant="outline" size="sm">
               <LogOut className="h-4 w-4 mr-2" />
               Logout
@@ -107,8 +107,8 @@ export default function Admin() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Dashboard</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-3xl font-bold mb-2 font-heading">Dashboard</h2>
+          <p className="text-muted-foreground font-body">
             Manage workshop dates, reservations, and participants
           </p>
         </div>

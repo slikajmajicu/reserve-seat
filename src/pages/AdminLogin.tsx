@@ -166,8 +166,8 @@ export default function AdminLogin() {
           <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
             <Calendar className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Workshop Admin</CardTitle>
-          <CardDescription>Sign in to manage workshops and reservations</CardDescription>
+          <CardTitle className="text-2xl font-heading">Workshop Admin</CardTitle>
+          <CardDescription className="font-body">Sign in to manage workshops and reservations</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">

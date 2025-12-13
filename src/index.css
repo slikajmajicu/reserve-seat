@@ -43,42 +43,46 @@ All colors MUST be HSL.
     --warning-foreground: 0 0% 100%;
 
     --radius: 0.75rem;
+
+    /* Font families */
+    --font-heading: 'TAN Nimbus', 'Georgia', serif;
+    --font-body: 'Horizon', 'Helvetica Neue', sans-serif;
   }
 
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    --background: 222 47% 8%;
+    --foreground: 210 40% 96%;
 
-    --card: 224 71% 4%;
-    --card-foreground: 210 40% 98%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 96%;
 
-    --popover: 224 71% 4%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 96%;
 
-    --primary: 189 94% 43%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 189 94% 50%;
+    --primary-foreground: 222 47% 8%;
 
-    --secondary: 215 27.9% 16.9%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 215 28% 17%;
+    --secondary-foreground: 210 40% 96%;
 
-    --muted: 215 27.9% 16.9%;
+    --muted: 215 28% 17%;
     --muted-foreground: 217.9 10.6% 64.9%;
 
     --accent: 27 96% 61%;
-    --accent-foreground: 0 0% 100%;
+    --accent-foreground: 222 47% 8%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --ring: 189 94% 43%;
+    --border: 215 28% 20%;
+    --input: 215 28% 20%;
+    --ring: 189 94% 50%;
 
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 100%;
+    --success: 142 76% 42%;
+    --success-foreground: 222 47% 8%;
 
     --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
+    --warning-foreground: 222 47% 8%;
   }
 }
 
@@ -89,5 +93,11 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-heading {
+    font-family: var(--font-heading);
+    letter-spacing: 0.02em;
   }
 }

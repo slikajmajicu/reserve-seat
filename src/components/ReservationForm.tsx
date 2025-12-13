@@ -129,7 +129,11 @@ export default function ReservationForm() {
       toast.error("Failed to load workshop dates");
       console.error("Error fetching workshops:", error);
     } else {
-      setWorkshops(data || []);
+      // Filter out fully booked workshops - users can only see available ones
+      const availableWorkshops = (data || []).filter(
+        (workshop) => workshop.max_capacity - workshop.reserved_count > 0
+      );
+      setWorkshops(availableWorkshops);
     }
     setLoading(false);
   };
@@ -333,15 +337,15 @@ export default function ReservationForm() {
         <div className="max-w-md mx-auto">
           <Card className="shadow-lg">
             <CardHeader className="text-center">
-              <CardTitle className="flex items-center justify-center gap-2">
+              <CardTitle className="flex items-center justify-center gap-2 font-heading">
                 <AlertCircle className="h-5 w-5 text-primary" />
                 Sign In Required
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="font-body">
                 Please sign in to make a workshop reservation
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 font-body">
               <p className="text-muted-foreground text-center">
                 You need to be signed in to reserve your spot for a workshop.
               </p>
@@ -396,19 +400,19 @@ export default function ReservationForm() {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 py-12 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2 text-foreground">Workshop Reservation</h1>
-          <p className="text-muted-foreground text-lg">
+          <h1 className="text-4xl font-bold mb-2 text-foreground font-heading">Workshop Reservation</h1>
+          <p className="text-muted-foreground text-lg font-body">
             Reserve your spot for our upcoming creative workshops
           </p>
         </div>
 
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 font-heading">
               <Calendar className="h-5 w-5 text-primary" />
               Book Your Workshop
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="font-body">
               Fill in your details to reserve your place
             </CardDescription>
           </CardHeader>

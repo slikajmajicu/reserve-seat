@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Loader2, Calendar, Users, CheckCircle2, AlertCircle } from "lucide-react";
+import { Loader2, Users, CheckCircle2, AlertCircle, Calendar } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 const formSchema = z.object({
@@ -330,16 +330,16 @@ export default function ReservationForm() {
   return <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 py-12 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="mb-2 text-foreground font-heading font-extrabold text-5xl">Workshop Reservation</h1>
-          <p className="text-muted-foreground text-lg font-body bg-inherit">
+          <h1 className="mb-2 font-heading font-extrabold text-center text-8xl text-destructive">Workshop Reservation</h1>
+          <p className="text-muted-foreground font-body bg-inherit text-xl">
             Reserve your spot for our upcoming creative workshops
           </p>
         </div>
 
-        <Card className="shadow-lg">
+        <Card className="my-0 py-0 shadow-2xl">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 font-heading text-primary">
-              <Calendar className="h-5 w-5 border-destructive-foreground text-primary-foreground bg-primary-foreground" />
+            <CardTitle className="flex items-center gap-2 font-heading font-extrabold text-2xl text-destructive">
+              <Calendar className="border-destructive-foreground bg-primary-foreground w-[15px] h-[15px] text-red-500" />
               Book Your Workshop
             </CardTitle>
             <CardDescription className="font-body">
@@ -347,7 +347,7 @@ export default function ReservationForm() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Form {...form}>
+            <Form className="mx-0">
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField control={form.control} name="workshopId" render={({
                 field
@@ -486,7 +486,7 @@ export default function ReservationForm() {
                       </div>
                     </FormItem>} />
 
-                <Button type="submit" disabled={submitting || !selectedWorkshop || isFull} className="w-full h-12 text-base font-extrabold text-primary-foreground bg-primary">
+                <Button type="submit" disabled={submitting || !selectedWorkshop || isFull} className="w-full h-12 text-base font-extrabold text-primary-foreground bg-destructive">
                   {submitting ? <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Reserving...

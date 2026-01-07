@@ -347,8 +347,8 @@ export default function ReservationForm() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Form className="mx-0">
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mx-0">
                 <FormField control={form.control} name="workshopId" render={({
                 field
               }) => <FormItem>

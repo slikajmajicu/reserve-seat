@@ -1,1 +1,16 @@
 project_id = "mlbzblnertbarnpgqdpq"
+
+[functions.send-confirmation-email]
+verify_jwt = false
+
+[functions.send-admin-notification]
+verify_jwt = false
+
+[functions.send-capacity-alert]
+verify_jwt = false
+
+[functions.export-workshop]
+verify_jwt = false
+
+[functions.verify-admin]
+verify_jwt = false

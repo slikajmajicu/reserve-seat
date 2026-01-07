@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Calendar, Users, Plus } from "lucide-react";
+import { LogOut, Calendar, Users } from "lucide-react";
 import { toast } from "sonner";
 import WorkshopsList from "@/components/admin/WorkshopsList";
 import ReservationsList from "@/components/admin/ReservationsList";
@@ -16,21 +16,21 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const checkAdminRole = async (userId: string) => {
-    const { data: roleData } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'admin')
-      .maybeSingle();
+  // Server-side admin verification via edge function
+  const verifyAdminServer = async (): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.functions.invoke("verify-admin");
+      
+      if (error) {
+        console.error("Admin verification error:", error);
+        return false;
+      }
 
-    if (!roleData) {
-      toast.error('Access denied: Admin privileges required');
-      navigate('/');
+      return data?.isAdmin === true;
+    } catch (err) {
+      console.error("Failed to verify admin status:", err);
       return false;
     }
-    setIsAdmin(true);
-    return true;
   };
 
   useEffect(() => {
@@ -42,12 +42,15 @@ export default function Admin() {
       if (session?.user) {
         setUser(session.user);
         // Defer admin check to avoid Supabase deadlock
-        setTimeout(() => {
-          checkAdminRole(session.user.id).then((isAdminUser) => {
-            if (isAdminUser) {
-              setLoading(false);
-            }
-          });
+        setTimeout(async () => {
+          const isAdminUser = await verifyAdminServer();
+          if (isAdminUser) {
+            setIsAdmin(true);
+            setLoading(false);
+          } else {
+            toast.error("Access denied: Admin privileges required");
+            navigate("/");
+          }
         }, 0);
       } else {
         navigate("/admin/login");
@@ -64,9 +67,13 @@ export default function Admin() {
     
     if (session?.user) {
       setUser(session.user);
-      const isAdminUser = await checkAdminRole(session.user.id);
+      const isAdminUser = await verifyAdminServer();
       if (isAdminUser) {
+        setIsAdmin(true);
         setLoading(false);
+      } else {
+        toast.error("Access denied: Admin privileges required");
+        navigate("/");
       }
     } else {
       navigate("/admin/login");
@@ -85,6 +92,10 @@ export default function Admin() {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
+  }
+
+  if (!isAdmin) {
+    return null;
   }
 
   return (

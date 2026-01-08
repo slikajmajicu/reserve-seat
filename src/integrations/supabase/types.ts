@@ -213,9 +213,82 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_reservations_safe: {
+        Row: {
+          city: string | null
+          created_at: string | null
+          email: string | null
+          first_name: string | null
+          id: string | null
+          last_name: string | null
+          phone_number: string | null
+          reservation_timestamp: string | null
+          seat_number: number | null
+          status: string | null
+          tshirt_option: string | null
+          user_id: string | null
+          workshop_id: string | null
+        }
+        Insert: {
+          city?: never
+          created_at?: string | null
+          email?: never
+          first_name?: never
+          id?: string | null
+          last_name?: string | null
+          phone_number?: never
+          reservation_timestamp?: string | null
+          seat_number?: number | null
+          status?: string | null
+          tshirt_option?: string | null
+          user_id?: string | null
+          workshop_id?: string | null
+        }
+        Update: {
+          city?: never
+          created_at?: string | null
+          email?: never
+          first_name?: never
+          id?: string | null
+          last_name?: string | null
+          phone_number?: never
+          reservation_timestamp?: string | null
+          seat_number?: number | null
+          status?: string | null
+          tshirt_option?: string | null
+          user_id?: string | null
+          workshop_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservations_workshop_id_fkey"
+            columns: ["workshop_id"]
+            isOneToOne: false
+            referencedRelation: "workshops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      get_admin_reservations: {
+        Args: { workshop_filter?: string }
+        Returns: {
+          city: string
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          phone_number: string
+          reservation_timestamp: string
+          seat_number: number
+          status: string
+          tshirt_option: string
+          user_id: string
+          workshop_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

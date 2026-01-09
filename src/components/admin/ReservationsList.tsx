@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Trash2, Mail, Phone, Edit } from "lucide-react";
+import { Trash2, Mail, Phone, Edit, ArrowRightLeft, AlertTriangle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +40,16 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+type Workshop = {
+  id: string;
+  date: string;
+  title: string | null;
+  start_time: string | null;
+  max_capacity: number;
+  reserved_count: number;
+  is_active: boolean;
+};
+
 type Reservation = {
   id: string;
   workshop_id: string;
@@ -61,10 +71,15 @@ export default function ReservationsList() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedWorkshop, setSelectedWorkshop] = useState<string>("all");
-  const [workshops, setWorkshops] = useState<any[]>([]);
+  const [workshops, setWorkshops] = useState<Workshop[]>([]);
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
   const [newStatus, setNewStatus] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  
+  // Reassignment state
+  const [reassignReservation, setReassignReservation] = useState<Reservation | null>(null);
+  const [targetWorkshopId, setTargetWorkshopId] = useState<string>("");
+  const [reassigning, setReassigning] = useState(false);
 
   useEffect(() => {
     fetchWorkshops();
@@ -203,6 +218,65 @@ export default function ReservationsList() {
     }
   };
 
+  const handleReassign = async () => {
+    if (!reassignReservation || !targetWorkshopId) return;
+
+    setReassigning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("reassign-workshop", {
+        body: {
+          reservationId: reassignReservation.id,
+          targetWorkshopId: targetWorkshopId,
+        },
+      });
+
+      if (error) {
+        throw new Error(error.message || "Reassignment failed");
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      const targetWorkshop = workshops.find(w => w.id === targetWorkshopId);
+      toast.success("Reservation reassigned", {
+        description: `Moved to ${targetWorkshop?.title || "workshop"} on ${new Date(targetWorkshop?.date || "").toLocaleDateString()}. Status: ${data?.data?.newStatus}`,
+      });
+
+      setReassignReservation(null);
+      setTargetWorkshopId("");
+      fetchReservations();
+    } catch (error: any) {
+      console.error("Reassignment error:", error);
+      toast.error("Failed to reassign", {
+        description: error.message || "Please try again",
+      });
+    } finally {
+      setReassigning(false);
+    }
+  };
+
+  const getAvailableWorkshopsForReassign = () => {
+    if (!reassignReservation) return [];
+    return workshops.filter(
+      w => w.id !== reassignReservation.workshop_id && w.is_active
+    );
+  };
+
+  const getTargetWorkshopCapacityInfo = () => {
+    if (!targetWorkshopId) return null;
+    const workshop = workshops.find(w => w.id === targetWorkshopId);
+    if (!workshop) return null;
+    
+    const available = workshop.max_capacity - workshop.reserved_count;
+    return {
+      available,
+      isFull: available <= 0,
+      total: workshop.max_capacity,
+      reserved: workshop.reserved_count,
+    };
+  };
+
   if (loading) {
     return <div className="text-center py-8 text-muted-foreground">Loading reservations...</div>;
   }
@@ -298,6 +372,107 @@ export default function ReservationsList() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
+                      {/* Reassign Button */}
+                      <Dialog open={reassignReservation?.id === reservation.id} onOpenChange={(open) => {
+                        if (!open) {
+                          setReassignReservation(null);
+                          setTargetWorkshopId("");
+                        }
+                      }}>
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            title="Reassign to another workshop"
+                            onClick={() => {
+                              setReassignReservation(reservation);
+                              setTargetWorkshopId("");
+                            }}
+                          >
+                            <ArrowRightLeft className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Reassign Workshop</DialogTitle>
+                            <DialogDescription>
+                              Move {reservation.first_name} {reservation.last_name} to a different workshop
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium">Current Workshop</label>
+                              <div className="text-sm text-muted-foreground">
+                                {new Date(reservation.workshops.date).toLocaleDateString("en-US", {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                })}
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium">Target Workshop</label>
+                              <Select value={targetWorkshopId} onValueChange={setTargetWorkshopId}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select a workshop" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {getAvailableWorkshopsForReassign().map((workshop) => {
+                                    const available = workshop.max_capacity - workshop.reserved_count;
+                                    return (
+                                      <SelectItem key={workshop.id} value={workshop.id}>
+                                        {new Date(workshop.date).toLocaleDateString("en-US", {
+                                          year: "numeric",
+                                          month: "short",
+                                          day: "numeric",
+                                        })} - {workshop.title || "Workshop"} ({available} seats)
+                                      </SelectItem>
+                                    );
+                                  })}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            {targetWorkshopId && (() => {
+                              const capacityInfo = getTargetWorkshopCapacityInfo();
+                              if (!capacityInfo) return null;
+                              return (
+                                <div className={`p-3 rounded-md ${capacityInfo.isFull ? "bg-destructive/10 border border-destructive/20" : "bg-muted"}`}>
+                                  <div className="flex items-center gap-2">
+                                    {capacityInfo.isFull && <AlertTriangle className="h-4 w-4 text-destructive" />}
+                                    <span className="text-sm font-medium">
+                                      {capacityInfo.isFull 
+                                        ? "Workshop is full - will be waitlisted" 
+                                        : `${capacityInfo.available} seats available`}
+                                    </span>
+                                  </div>
+                                  <div className="text-xs text-muted-foreground mt-1">
+                                    {capacityInfo.reserved} / {capacityInfo.total} reserved
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                          <DialogFooter>
+                            <Button 
+                              variant="outline" 
+                              onClick={() => {
+                                setReassignReservation(null);
+                                setTargetWorkshopId("");
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            <Button 
+                              onClick={handleReassign}
+                              disabled={!targetWorkshopId || reassigning}
+                            >
+                              {reassigning ? "Reassigning..." : "Reassign"}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+
+                      {/* Edit Status Button */}
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button 
@@ -349,6 +524,7 @@ export default function ReservationsList() {
                         </DialogContent>
                       </Dialog>
                       
+                      {/* Delete Button */}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/90">

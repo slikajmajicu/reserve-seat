@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Calendar, Users } from "lucide-react";
+import { LogOut, Calendar, Users, Download } from "lucide-react";
 import { toast } from "sonner";
 import WorkshopsList from "@/components/admin/WorkshopsList";
 import ReservationsList from "@/components/admin/ReservationsList";
@@ -86,6 +86,49 @@ export default function Admin() {
     navigate("/admin/login");
   };
 
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportAllData = async () => {
+    setExporting(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      
+      if (!token) {
+        toast.error("Authentication required");
+        return;
+      }
+
+      const response = await supabase.functions.invoke("export-all-data", {});
+
+      if (response.error) {
+        throw new Error(response.error.message || "Export failed");
+      }
+
+      // Create download link
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `workshop-data-export-${new Date().toISOString().split("T")[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success("Data exported successfully");
+    } catch (error: any) {
+      console.error("Export error:", error);
+      toast.error("Failed to export data", {
+        description: error.message || "Please try again",
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -108,6 +151,10 @@ export default function Admin() {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground font-body">{user?.email}</span>
+            <Button onClick={handleExportAllData} variant="outline" size="sm" disabled={exporting}>
+              <Download className="h-4 w-4 mr-2" />
+              {exporting ? "Exporting..." : "Export All Data"}
+            </Button>
             <Button onClick={handleLogout} variant="outline" size="sm">
               <LogOut className="h-4 w-4 mr-2" />
               Logout

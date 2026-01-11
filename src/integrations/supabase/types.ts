@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      edge_function_rate_limits: {
+        Row: {
+          created_at: string
+          function_name: string
+          id: string
+          identifier: string
+        }
+        Insert: {
+          created_at?: string
+          function_name: string
+          id?: string
+          identifier: string
+        }
+        Update: {
+          created_at?: string
+          function_name?: string
+          id?: string
+          identifier?: string
+        }
+        Relationships: []
+      }
       pii_access_log: {
         Row: {
           action: string
@@ -271,6 +292,7 @@ export type Database = {
       }
     }
     Functions: {
+      cleanup_edge_function_rate_limits: { Args: never; Returns: undefined }
       get_admin_reservations: {
         Args: { workshop_filter?: string }
         Returns: {

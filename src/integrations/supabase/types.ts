@@ -235,7 +235,7 @@ export type Database = {
           email?: never
           first_name?: never
           id?: string | null
-          last_name?: string | null
+          last_name?: never
           phone_number?: never
           reservation_timestamp?: string | null
           seat_number?: number | null
@@ -250,7 +250,7 @@ export type Database = {
           email?: never
           first_name?: never
           id?: string | null
-          last_name?: string | null
+          last_name?: never
           phone_number?: never
           reservation_timestamp?: string | null
           seat_number?: number | null

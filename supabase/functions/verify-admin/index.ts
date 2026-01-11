@@ -6,6 +6,43 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Rate limit configuration: 20 requests per minute per user (higher for auth checks)
+const RATE_LIMIT_MAX = 20;
+const RATE_LIMIT_WINDOW_SECONDS = 60;
+const FUNCTION_NAME = "verify-admin";
+
+const checkRateLimit = async (
+  supabase: any,
+  identifier: string
+): Promise<{ allowed: boolean; remaining: number }> => {
+  const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_SECONDS * 1000).toISOString();
+  
+  const { count, error: countError } = await supabase
+    .from("edge_function_rate_limits")
+    .select("*", { count: "exact", head: true })
+    .eq("identifier", identifier)
+    .eq("function_name", FUNCTION_NAME)
+    .gte("created_at", windowStart);
+
+  if (countError) {
+    console.error("Rate limit check error:", countError);
+    return { allowed: true, remaining: RATE_LIMIT_MAX };
+  }
+
+  const currentCount = count || 0;
+  const allowed = currentCount < RATE_LIMIT_MAX;
+  const remaining = Math.max(0, RATE_LIMIT_MAX - currentCount - 1);
+
+  if (allowed) {
+    await supabase.from("edge_function_rate_limits").insert({
+      identifier,
+      function_name: FUNCTION_NAME,
+    });
+  }
+
+  return { allowed, remaining };
+};
+
 serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -45,10 +82,31 @@ serve(async (req: Request) => {
     }
 
     const userId = claimsData.claims.sub;
-    console.log(`verify-admin: Checking admin status for user ${userId}`);
-
-    // Use service role client to bypass RLS and check user_roles table
+    
+    // Use service role client for rate limiting and role check
     const supabaseService = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Check rate limit
+    const { allowed, remaining } = await checkRateLimit(supabaseService, userId);
+    
+    if (!allowed) {
+      console.warn(`Rate limit exceeded for user ${userId} on ${FUNCTION_NAME}`);
+      return new Response(
+        JSON.stringify({ isAdmin: false, error: "Too many requests" }),
+        { 
+          status: 429, 
+          headers: { 
+            ...corsHeaders, 
+            "Content-Type": "application/json",
+            "X-RateLimit-Limit": RATE_LIMIT_MAX.toString(),
+            "X-RateLimit-Remaining": "0",
+            "Retry-After": RATE_LIMIT_WINDOW_SECONDS.toString(),
+          } 
+        }
+      );
+    }
+
+    console.log(`verify-admin: Checking admin status for user ${userId}`);
 
     const { data: roleData, error: roleError } = await supabaseService
       .from("user_roles")
@@ -70,7 +128,15 @@ serve(async (req: Request) => {
 
     return new Response(
       JSON.stringify({ isAdmin }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { 
+        status: 200, 
+        headers: { 
+          ...corsHeaders, 
+          "Content-Type": "application/json",
+          "X-RateLimit-Limit": RATE_LIMIT_MAX.toString(),
+          "X-RateLimit-Remaining": remaining.toString(),
+        } 
+      }
     );
   } catch (error) {
     console.error("verify-admin: Unexpected error", error);

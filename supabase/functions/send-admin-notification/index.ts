@@ -10,6 +10,11 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// Rate limit configuration: 10 requests per minute per user
+const RATE_LIMIT_MAX = 10;
+const RATE_LIMIT_WINDOW_SECONDS = 60;
+const FUNCTION_NAME = "send-admin-notification";
+
 interface NotificationRequest {
   firstName: string;
   lastName: string;
@@ -22,6 +27,38 @@ interface NotificationRequest {
   status: string;
   seatNumber?: number;
 }
+
+const checkRateLimit = async (
+  supabase: any,
+  identifier: string
+): Promise<{ allowed: boolean; remaining: number }> => {
+  const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_SECONDS * 1000).toISOString();
+  
+  const { count, error: countError } = await supabase
+    .from("edge_function_rate_limits")
+    .select("*", { count: "exact", head: true })
+    .eq("identifier", identifier)
+    .eq("function_name", FUNCTION_NAME)
+    .gte("created_at", windowStart);
+
+  if (countError) {
+    console.error("Rate limit check error:", countError);
+    return { allowed: true, remaining: RATE_LIMIT_MAX };
+  }
+
+  const currentCount = count || 0;
+  const allowed = currentCount < RATE_LIMIT_MAX;
+  const remaining = Math.max(0, RATE_LIMIT_MAX - currentCount - 1);
+
+  if (allowed) {
+    await supabase.from("edge_function_rate_limits").insert({
+      identifier,
+      function_name: FUNCTION_NAME,
+    });
+  }
+
+  return { allowed, remaining };
+};
 
 const verifyAuth = async (req: Request): Promise<{ authenticated: boolean; userId?: string }> => {
   const authHeader = req.headers.get("Authorization");
@@ -52,12 +89,37 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     // Verify authentication
-    const { authenticated } = await verifyAuth(req);
-    if (!authenticated) {
+    const { authenticated, userId } = await verifyAuth(req);
+    if (!authenticated || !userId) {
       console.error("Unauthorized request to send-admin-notification");
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Check rate limit
+    const supabaseService = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    const { allowed, remaining } = await checkRateLimit(supabaseService, userId);
+    
+    if (!allowed) {
+      console.warn(`Rate limit exceeded for user ${userId} on ${FUNCTION_NAME}`);
+      return new Response(
+        JSON.stringify({ error: "Too many requests. Please try again later." }),
+        { 
+          status: 429, 
+          headers: { 
+            "Content-Type": "application/json",
+            "X-RateLimit-Limit": RATE_LIMIT_MAX.toString(),
+            "X-RateLimit-Remaining": "0",
+            "Retry-After": RATE_LIMIT_WINDOW_SECONDS.toString(),
+            ...corsHeaders 
+          } 
+        }
       );
     }
 
@@ -150,6 +212,8 @@ const handler = async (req: Request): Promise<Response> => {
       status: 200,
       headers: {
         "Content-Type": "application/json",
+        "X-RateLimit-Limit": RATE_LIMIT_MAX.toString(),
+        "X-RateLimit-Remaining": remaining.toString(),
         ...corsHeaders,
       },
     });

@@ -7,6 +7,43 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Rate limit configuration: 3 full exports per minute per admin (expensive operation)
+const RATE_LIMIT_MAX = 3;
+const RATE_LIMIT_WINDOW_SECONDS = 60;
+const FUNCTION_NAME = "export-all-data";
+
+const checkRateLimit = async (
+  supabase: any,
+  identifier: string
+): Promise<{ allowed: boolean; remaining: number }> => {
+  const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_SECONDS * 1000).toISOString();
+  
+  const { count, error: countError } = await supabase
+    .from("edge_function_rate_limits")
+    .select("*", { count: "exact", head: true })
+    .eq("identifier", identifier)
+    .eq("function_name", FUNCTION_NAME)
+    .gte("created_at", windowStart);
+
+  if (countError) {
+    console.error("Rate limit check error:", countError);
+    return { allowed: true, remaining: RATE_LIMIT_MAX };
+  }
+
+  const currentCount = count || 0;
+  const allowed = currentCount < RATE_LIMIT_MAX;
+  const remaining = Math.max(0, RATE_LIMIT_MAX - currentCount - 1);
+
+  if (allowed) {
+    await supabase.from("edge_function_rate_limits").insert({
+      identifier,
+      function_name: FUNCTION_NAME,
+    });
+  }
+
+  return { allowed, remaining };
+};
+
 async function verifyAdminAuth(req: Request) {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
@@ -56,6 +93,26 @@ async function handler(req: Request): Promise<Response> {
   try {
     const { userId, supabaseAdmin } = await verifyAdminAuth(req);
     console.log("Admin verified:", userId);
+
+    // Check rate limit
+    const { allowed, remaining } = await checkRateLimit(supabaseAdmin, userId);
+    
+    if (!allowed) {
+      console.warn(`Rate limit exceeded for admin ${userId} on ${FUNCTION_NAME}`);
+      return new Response(
+        JSON.stringify({ error: "Too many export requests. Please try again later." }),
+        { 
+          status: 429, 
+          headers: { 
+            ...corsHeaders, 
+            "Content-Type": "application/json",
+            "X-RateLimit-Limit": RATE_LIMIT_MAX.toString(),
+            "X-RateLimit-Remaining": "0",
+            "Retry-After": RATE_LIMIT_WINDOW_SECONDS.toString(),
+          } 
+        }
+      );
+    }
 
     // Fetch all workshops
     const { data: workshops, error: workshopsError } = await supabaseAdmin
@@ -221,6 +278,8 @@ async function handler(req: Request): Promise<Response> {
         ...corsHeaders,
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "Content-Disposition": `attachment; filename="${filename}"`,
+        "X-RateLimit-Limit": RATE_LIMIT_MAX.toString(),
+        "X-RateLimit-Remaining": remaining.toString(),
       },
     });
   } catch (error: any) {

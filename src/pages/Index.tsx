@@ -5,7 +5,7 @@
 //};
 
 //export default Index;
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -22,6 +22,12 @@ export default function Index() {
               <h1 className="text-2xl font-bold font-heading">reserve-seat</h1>
             </div>
             <nav className="flex items-center gap-4">
+              <Link
+                to="/privacy-policy"
+                className="text-sm text-muted-foreground hover:text-primary hover:underline"
+              >
+                Privacy Policy
+              </Link>
               <Button variant="ghost" onClick={() => navigate("/auth")}>
                 Sign In
               </Button>
@@ -119,12 +125,12 @@ export default function Index() {
               </div>
               
               <div className="flex gap-6 text-sm text-muted-foreground">
-                <a href="/privacy-policy" className="hover:text-primary hover:underline">
+                <Link to="/privacy-policy" className="hover:text-primary hover:underline">
                   Privacy Policy
-                </a>
-                <a href="/terms-of-service" className="hover:text-primary hover:underline">
+                </Link>
+                <Link to="/terms-of-service" className="hover:text-primary hover:underline">
                   Terms of Service
-                </a>
+                </Link>
               </div>
             </div>
             

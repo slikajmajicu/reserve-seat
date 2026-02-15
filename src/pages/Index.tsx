@@ -53,7 +53,7 @@ export default function Index() {
   return (
     <>
       <Helmet>
-        <meta name="google-site-verification" content="TVOJ_VERIFICATION_CODE" />
+        <meta name="google-site-verification" content="fwTOIhnIePkKKlAwHnITd2unr3uTw2a4evcJV_eT3Es" />
       </Helmet>
 
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
@@ -90,44 +90,6 @@ export default function Index() {
                 Get Started Free
               </Button>
             </div>
-          </div>
-        </section>
-
-        {/* Features Section */}
-        <section className="container mx-auto px-4 py-16">
-          <h2 className="text-3xl font-bold text-center mb-12 font-heading">
-            Why Choose reserve-seat?
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            <Card>
-              <CardHeader>
-                <Calendar className="h-12 w-12 text-primary mb-4" />
-                <CardTitle>Easy Booking</CardTitle>
-                <CardDescription>
-                  Reserve your workshop spot in seconds with our intuitive interface
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <Clock className="h-12 w-12 text-primary mb-4" />
-                <CardTitle>Real-Time Updates</CardTitle>
-                <CardDescription>
-                  Get instant notifications about your reservations and schedule changes
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <Users className="h-12 w-12 text-primary mb-4" />
-                <CardTitle>Manage Attendance</CardTitle>
-                <CardDescription>
-                  Track your workshop attendance and never miss an important session
-                </CardDescription>
-              </CardHeader>
-            </Card>
           </div>
         </section>
 

@@ -1,45 +1,21 @@
 
 
-# Fix Google OAuth Verification Issues
+# Fix: Privacy Policy Page Not Showing Up
 
-These issues come from Google's OAuth consent screen verification process, which checks your home page for specific requirements. There are 4 issues to fix plus a build error.
+## Root Cause
 
----
+There is an empty file called `privacy-policy` (no extension) at the project root. When the browser requests `/privacy-policy`, the server serves this empty file instead of `index.html`, so the React SPA never loads and the page is blank.
 
-## Issue 1: Home page appears "behind a login"
+## Fix
 
-The home page currently shows a loading spinner while checking auth, and redirects logged-in users away. Google's bot may interpret this as requiring login.
+**Delete the `privacy-policy` file** from the project root. Once removed, the `/privacy-policy` URL will correctly fall through to `index.html`, the React app will boot, and React Router will render the `PrivacyPolicy` component as expected.
 
-**Fix:** Remove the auth-check redirect from `Index.tsx`. The landing page should always render its public content. Authenticated users can still navigate to the dashboard via a button, but the page itself won't redirect.
+No other code changes are needed -- the route, component, and footer link are all already correct.
 
-## Issue 2: Home page doesn't explain the app's purpose
+## Technical Details
 
-The landing page already has descriptive content, but the loading spinner before it appears may prevent Google's bot from seeing it. Fixing Issue 1 (removing the auth gate) resolves this as well.
-
-## Issue 3: App name mismatch
-
-The home page header shows "reserve-seat" -- this must match the name configured in your Google Cloud Console OAuth consent screen. No code change needed; just verify the name in Google Cloud Console matches "reserve-seat".
-
-## Issue 4: No privacy policy link on home page
-
-The footer in `Index.tsx` already has a privacy policy link (`/privacy-policy`). However, there is a broken `<footer>` tag in `index.html` using React-style `className` attributes (which don't work in plain HTML) and the "Privacy Policy" text was removed in a recent edit. This may confuse Google's bot. Fix: remove the broken footer from `index.html`.
-
-## Build Error: `react-helmet` not found
-
-Both `Index.tsx` and `Auth.tsx` import `react-helmet` but it has no type declarations installed. Fix: replace `react-helmet` with direct `document.title` or remove the import since the google-site-verification meta tag is already in `index.html`.
-
----
-
-## Summary of Changes
-
-### `src/pages/Index.tsx`
-- Remove `useState`, `useEffect`, auth check, loading spinner, and redirect logic
-- Remove `react-helmet` import and `Helmet` usage (the verification meta tag is already in `index.html`)
-- Keep the full public landing page rendering unconditionally
-
-### `src/pages/Auth.tsx`
-- Remove `react-helmet` import and `Helmet` component (the meta tag with the placeholder value adds no benefit)
-
-### `index.html`
-- Remove the broken `<footer>` block after `</body>` (it uses React syntax and has no visible text)
+- File to delete: `privacy-policy` (root directory, 0 bytes)
+- The route `/privacy-policy` is already defined in `src/App.tsx` (line 32)
+- The component `src/pages/PrivacyPolicy.tsx` exists and is correct
+- The footer link in `src/pages/Index.tsx` (line 122) already points to `/privacy-policy`
 

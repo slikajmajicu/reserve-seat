@@ -234,8 +234,8 @@ export default function ReservationForm() {
           console.error("Capacity alert failed:", alertError);
         });
       }
-      toast.success("You have successfully reserved your place!", {
-        description: `Workshop date: ${new Date(workshop.date).toLocaleDateString()}. We look forward to seeing you!`
+      toast.success("Uspešno ste ulogovani i rezervisali ste mesto!", {
+        description: `Datum radionice: ${new Date(workshop.date).toLocaleDateString()}. Vidimo se!`
       });
       form.reset();
     } catch (error: any) {

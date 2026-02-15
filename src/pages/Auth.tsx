@@ -72,7 +72,9 @@ export default function Auth() {
     if (error) {
       toast.error("Sign in failed", { description: error.message });
     } else {
-      toast.success("Welcome back!");
+      toast.success("Uspešno ste ulogovani!", {
+        description: "Sada možete da rezervišete mesto.",
+      });
       navigate("/");
     }
     setLoading(false);

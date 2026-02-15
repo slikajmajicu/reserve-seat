@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Loader2, Calendar } from "lucide-react";
-import { Helmet } from "react-helmet";
+
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -127,11 +127,6 @@ export default function Auth() {
   }
 
   return (
-    <>
-      <Helmet>
-        <meta name="google-site-verification" content="OVDE_STAVI_SVOJ_VERIFICATION_CODE" />
-      </Helmet>
-      
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 py-12 px-4">
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
@@ -300,6 +295,5 @@ export default function Auth() {
           </footer>
         </div>
       </div>
-    </>
   );
 }

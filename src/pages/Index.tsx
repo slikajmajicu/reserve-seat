@@ -5,57 +5,14 @@
 //};
 
 //export default Index;
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { Calendar, Clock, Users, CheckCircle } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Helmet } from "react-helmet";
 
 export default function Index() {
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Check if user is authenticated
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setIsAuthenticated(true);
-        // Redirect to dashboard or main app
-        navigate("/dashboard"); // ili gde god ide authenticated user
-      }
-      setLoading(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        setIsAuthenticated(true);
-        navigate("/dashboard");
-      } else {
-        setIsAuthenticated(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  // Public landing page
   return (
-    <>
-      <Helmet>
-        <meta name="google-site-verification" content="fwTOIhnIePkKKlAwHnITd2unr3uTw2a4evcJV_eT3Es" />
-      </Helmet>
-
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
         {/* Header */}
         <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -176,7 +133,6 @@ export default function Index() {
             </div>
           </div>
         </footer>
-      </div>
-    </>
+    </div>
   );
 }

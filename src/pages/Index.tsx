@@ -89,9 +89,6 @@ export default function Index() {
               <Button size="lg" onClick={() => navigate("/auth")}>
                 Get Started Free
               </Button>
-              <Button size="lg" variant="outline">
-                Learn More
-              </Button>
             </div>
           </div>
         </section>

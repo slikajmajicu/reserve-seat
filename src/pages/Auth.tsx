@@ -287,5 +287,9 @@ export default function Auth() {
         </p>
       </div>
     </div>
-  );
+  );<footer className="p-4 text-center">
+  <a href="/privacy-policy" className="text-blue-600 underline">
+    Privacy Policy
+  </a>
+</footer>
 }

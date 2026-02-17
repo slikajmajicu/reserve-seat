@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.reassign-workshop]
 verify_jwt = false
+
+[functions.notify-admin-login]
+verify_jwt = false

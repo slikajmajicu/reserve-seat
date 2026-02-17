@@ -12,6 +12,26 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Loader2, Calendar } from "lucide-react";
 
+const sendAdminNotification = async (
+  email: string,
+  provider: string,
+  userName?: string
+) => {
+  try {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    await fetch(`${supabaseUrl}/functions/v1/notify-admin-login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${supabaseKey}`,
+      },
+      body: JSON.stringify({ email, provider, user_name: userName }),
+    });
+  } catch (err) {
+    console.error("Admin login notification failed:", err);
+  }
+};
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -32,6 +52,13 @@ export default function Auth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (session?.user) {
+          if (event === "SIGNED_IN") {
+            sendAdminNotification(
+              session.user.email ?? "",
+              session.user.app_metadata?.provider ?? "email",
+              session.user.user_metadata?.full_name ?? session.user.user_metadata?.name
+            );
+          }
           navigate("/");
         }
         setCheckingAuth(false);

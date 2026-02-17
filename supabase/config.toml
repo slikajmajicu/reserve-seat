@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.notify-admin-login]
 verify_jwt = false
+
+[functions.submit-reservation-request]
+verify_jwt = false

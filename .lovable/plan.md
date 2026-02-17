@@ -1,21 +1,68 @@
 
 
-# Fix: Privacy Policy Page Not Showing Up
+# Enhance Workshop Reservation System
 
-## Root Cause
+## Overview
+Upgrade the existing workshop reservation system with three improvements: a public calendar view on the homepage, enhanced time slot display, and improved email notification templates.
 
-There is an empty file called `privacy-policy` (no extension) at the project root. When the browser requests `/privacy-policy`, the server serves this empty file instead of `index.html`, so the React SPA never loads and the page is blank.
+## 1. Public Calendar View on Homepage
 
-## Fix
+Add a visual calendar to the homepage that shows upcoming workshops to visitors **before** they sign in. This replaces the current text-only "How It Works" section with an interactive preview.
 
-**Delete the `privacy-policy` file** from the project root. Once removed, the `/privacy-policy` URL will correctly fall through to `index.html`, the React app will boot, and React Router will render the `PrivacyPolicy` component as expected.
+**What visitors will see:**
+- A monthly calendar widget highlighting dates that have workshops
+- Clicking a date shows the workshops available that day (title, time, seats remaining)
+- A "Sign up to reserve" call-to-action directing to the auth page
 
-No other code changes are needed -- the route, component, and footer link are all already correct.
+**Data source:** The existing `workshops` table already has a public SELECT policy (`Anyone can view active workshops`), so no database changes are needed.
+
+## 2. Add End Time to Workshops
+
+Currently workshops only have a `start_time`. Adding an `end_time` column gives users a complete picture of the time commitment.
+
+**Database change:**
+- Add `end_time` (TIME, nullable) column to the `workshops` table
+- Update the admin "Add Workshop" dialog to include an end time field
+- Display the time range (e.g., "9:00 AM - 11:00 AM") in the calendar view, reservation form, and admin dashboard
+
+## 3. Improved Email Templates
+
+Upgrade the existing `send-confirmation-email` and `send-admin-notification` edge functions with professional HTML email templates that include:
+- Styled headers with the app branding
+- Clear booking details in a formatted card layout
+- Actionable tips (arrive early, save confirmation, cancellation policy)
+- Footer with privacy policy and terms of service links
+
+No new edge functions are needed -- the existing ones will be updated in place.
+
+## What Will NOT Change
+- No new database tables (no `time_slots` or `bookings` -- the existing `workshops` and `reservations` tables already handle this)
+- No changes to authentication (Google OAuth is already working with Lovable's managed sign-in)
+- No changes to RLS policies (they are already properly configured)
+- Privacy Policy and Terms of Service pages already exist
+
+---
 
 ## Technical Details
 
-- File to delete: `privacy-policy` (root directory, 0 bytes)
-- The route `/privacy-policy` is already defined in `src/App.tsx` (line 32)
-- The component `src/pages/PrivacyPolicy.tsx` exists and is correct
-- The footer link in `src/pages/Index.tsx` (line 122) already points to `/privacy-policy`
+### Files to Create
+- `src/components/WorkshopCalendar.tsx` -- Calendar component showing workshop dates with availability indicators
 
+### Files to Modify
+- `src/pages/Index.tsx` -- Replace "How It Works" section with the public calendar view
+- `src/components/admin/AddWorkshopDialog.tsx` -- Add end_time field
+- `src/components/admin/WorkshopsList.tsx` -- Display end_time in the table
+- `src/components/ReservationForm.tsx` -- Show end_time in workshop selection dropdown
+- `supabase/functions/send-confirmation-email/index.ts` -- Enhanced HTML template
+- `supabase/functions/send-admin-notification/index.ts` -- Enhanced HTML template
+
+### Database Migration
+```sql
+ALTER TABLE public.workshops ADD COLUMN IF NOT EXISTS end_time TIME WITHOUT TIME ZONE;
+```
+
+### Calendar Component Approach
+- Uses the existing `react-day-picker` / `Calendar` UI component already installed
+- Fetches active workshops from the `workshops` table (public read access is already enabled)
+- Highlights dates with workshops using custom day modifiers
+- Shows a popover or card below the calendar with workshop details for the selected date

@@ -8,6 +8,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import WorkshopCalendar from "@/components/WorkshopCalendar";
 
 export default function Index() {
   const navigate = useNavigate();
@@ -56,47 +57,16 @@ export default function Index() {
           </div>
         </section>
 
-        {/* How It Works Section */}
+        {/* Upcoming Workshops Calendar */}
         <section className="container mx-auto px-4 py-16 bg-muted/30">
-          <h2 className="text-3xl font-bold text-center mb-12 font-heading">
-            How It Works
+          <h2 className="text-3xl font-bold text-center mb-4 font-heading">
+            Upcoming Workshops
           </h2>
-          <div className="max-w-3xl mx-auto space-y-8">
-            <div className="flex gap-4 items-start">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
-                1
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold mb-2">Create Your Account</h3>
-                <p className="text-muted-foreground">
-                  Sign up in seconds using your email or Google account
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-4 items-start">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
-                2
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold mb-2">Browse Workshops</h3>
-                <p className="text-muted-foreground">
-                  View available workshops and find the ones that interest you
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-4 items-start">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
-                3
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold mb-2">Reserve Your Seat</h3>
-                <p className="text-muted-foreground">
-                  Book your spot instantly and receive confirmation
-                </p>
-              </div>
-            </div>
+          <p className="text-center text-muted-foreground mb-10 max-w-xl mx-auto">
+            Browse available dates and see what's coming up. Sign in to reserve your spot.
+          </p>
+          <div className="max-w-3xl mx-auto">
+            <WorkshopCalendar />
           </div>
         </section>
 

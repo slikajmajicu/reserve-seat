@@ -26,6 +26,7 @@ type Workshop = {
   date: string;
   title: string;
   start_time: string | null;
+  end_time: string | null;
   max_capacity: number;
   reserved_count: number;
 };
@@ -173,21 +174,22 @@ export default function ReservationForm() {
       console.log("Reservation created successfully:", newReservation);
 
       // Send confirmation email
-      const workshopDateTime = workshop.start_time ? `${new Date(workshop.date).toLocaleDateString("en-US", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric"
-      })} at ${new Date(`2000-01-01T${workshop.start_time}`).toLocaleTimeString("en-US", {
+      const formatTimeStr = (t: string | null) => t ? new Date(`2000-01-01T${t}`).toLocaleTimeString("en-US", {
         hour: "numeric",
         minute: "2-digit",
         hour12: true
-      })}` : new Date(workshop.date).toLocaleDateString("en-US", {
+      }) : null;
+
+      const dateStr = new Date(workshop.date).toLocaleDateString("en-US", {
         weekday: "long",
         year: "numeric",
         month: "long",
         day: "numeric"
       });
+      const startTime = formatTimeStr(workshop.start_time);
+      const endTime = formatTimeStr(workshop.end_time);
+      const timeStr = startTime ? (endTime ? `${startTime} – ${endTime}` : startTime) : null;
+      const workshopDateTime = timeStr ? `${dateStr} at ${timeStr}` : dateStr;
       supabase.functions.invoke("send-confirmation-email", {
         body: {
           email: values.email,
@@ -368,11 +370,17 @@ export default function ReservationForm() {
                         month: "long",
                         day: "numeric"
                       });
-                      const time = workshop.start_time ? new Date(`2000-01-01T${workshop.start_time}`).toLocaleTimeString("en-US", {
+                      const startTime = workshop.start_time ? new Date(`2000-01-01T${workshop.start_time}`).toLocaleTimeString("en-US", {
                         hour: "numeric",
                         minute: "2-digit",
                         hour12: true
                       }) : null;
+                      const endTime = workshop.end_time ? new Date(`2000-01-01T${workshop.end_time}`).toLocaleTimeString("en-US", {
+                        hour: "numeric",
+                        minute: "2-digit",
+                        hour12: true
+                      }) : null;
+                      const time = startTime ? (endTime ? `${startTime} – ${endTime}` : startTime) : null;
                       return <SelectItem key={workshop.id} value={workshop.id}>
                                 <div className="flex flex-col gap-1">
                                   <div className="flex items-center gap-2">

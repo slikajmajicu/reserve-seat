@@ -29,6 +29,7 @@ type Workshop = {
   date: string;
   title: string;
   start_time: string | null;
+  end_time: string | null;
   max_capacity: number;
   reserved_count: number;
   is_active: boolean;
@@ -236,6 +237,11 @@ export default function WorkshopsList() {
                         minute: "2-digit",
                         hour12: true,
                       })}
+                      {workshop.end_time && ` – ${new Date(`2000-01-01T${workshop.end_time}`).toLocaleTimeString("en-US", {
+                        hour: "numeric",
+                        minute: "2-digit",
+                        hour12: true,
+                      })}`}
                     </Badge>
                   ) : (
                     <span className="text-muted-foreground">-</span>

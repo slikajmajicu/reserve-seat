@@ -28,6 +28,7 @@ const formSchema = z.object({
   date: z.string().min(1, "Date is required"),
   title: z.string().min(1, "Title is required").max(200),
   startTime: z.string().optional(),
+  endTime: z.string().optional(),
   maxCapacity: z.string().min(1, "Capacity is required"),
 });
 
@@ -41,6 +42,7 @@ export default function AddWorkshopDialog() {
       date: "",
       title: "Workshop Session",
       startTime: "",
+      endTime: "",
       maxCapacity: "10",
     },
   });
@@ -55,9 +57,11 @@ export default function AddWorkshopDialog() {
         is_active: true,
       };
 
-      // Only add start_time if provided
       if (values.startTime) {
         workshopData.start_time = values.startTime;
+      }
+      if (values.endTime) {
+        workshopData.end_time = values.endTime;
       }
 
       const { error } = await supabase.from("workshops").insert(workshopData);
@@ -121,19 +125,34 @@ export default function AddWorkshopDialog() {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="startTime"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Start Time (Optional)</FormLabel>
-                  <FormControl>
-                    <Input type="time" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="startTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Start Time (Optional)</FormLabel>
+                    <FormControl>
+                      <Input type="time" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="endTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>End Time (Optional)</FormLabel>
+                    <FormControl>
+                      <Input type="time" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}

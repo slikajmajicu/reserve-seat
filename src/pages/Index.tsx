@@ -5,13 +5,11 @@
 //};
 
 //export default Index;
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Calendar } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import WorkshopCalendar from "@/components/WorkshopCalendar";
 
 export default function Index() {
-  const navigate = useNavigate();
 
   return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
@@ -29,12 +27,6 @@ export default function Index() {
               >
                 Privacy Policy
               </Link>
-              <Button variant="ghost" onClick={() => navigate("/auth")}>
-                Sign In
-              </Button>
-              <Button onClick={() => navigate("/auth")}>
-                Get Started
-              </Button>
             </nav>
           </div>
         </header>
@@ -43,17 +35,12 @@ export default function Index() {
         <section className="container mx-auto px-4 py-20 text-center">
           <div className="max-w-3xl mx-auto space-y-6">
             <h1 className="text-5xl font-bold tracking-tight font-heading">
-              Reserve Your Workshop Spot
+              T-Shirt Printing Workshops in Belgrade
             </h1>
             <p className="text-xl text-muted-foreground font-body">
-              reserve-seat is a simple and efficient workshop reservation system. 
-              Book your spot, manage your schedule, and never miss a workshop again.
+              Join our hands-on screen printing workshops. Pick a date, request
+              a spot, and we'll confirm your reservation by email.
             </p>
-            <div className="flex gap-4 justify-center mt-8">
-              <Button size="lg" onClick={() => navigate("/auth")}>
-                Get Started Free
-              </Button>
-            </div>
           </div>
         </section>
 
@@ -63,25 +50,29 @@ export default function Index() {
             Upcoming Workshops
           </h2>
           <p className="text-center text-muted-foreground mb-10 max-w-xl mx-auto">
-            Browse available dates and see what's coming up. Sign in to reserve your spot.
+            Browse available dates and request your spot — no account needed.
           </p>
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-4xl mx-auto">
             <WorkshopCalendar />
           </div>
         </section>
 
-        {/* CTA Section */}
+        {/* Group Bookings Section */}
         <section className="container mx-auto px-4 py-20 text-center">
           <div className="max-w-2xl mx-auto space-y-6">
             <h2 className="text-4xl font-bold font-heading">
-              Ready to Get Started?
+              Group Bookings, Team Building &amp; Gift Vouchers
             </h2>
             <p className="text-xl text-muted-foreground">
-              Join reserve-seat today and never miss a workshop again
+              Planning a team event or looking for a unique gift? Get in touch
+              at{" "}
+              <a
+                href="mailto:slikajmajicu@gmail.com"
+                className="text-primary underline"
+              >
+                slikajmajicu@gmail.com
+              </a>
             </p>
-            <Button size="lg" onClick={() => navigate("/auth")}>
-              Sign Up Now - It's Free
-            </Button>
           </div>
         </section>
 

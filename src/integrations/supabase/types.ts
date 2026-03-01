@@ -139,49 +139,61 @@ export type Database = {
       }
       reservations: {
         Row: {
-          city: string
+          city: string | null
           created_at: string
           email: string
           first_name: string
           id: string
-          last_name: string
-          phone_number: string
+          last_name: string | null
+          message: string | null
+          phone_number: string | null
+          requested_date: string | null
+          requester_email: string | null
+          requester_name: string | null
           reservation_timestamp: string
           seat_number: number | null
           status: string
-          tshirt_option: string
-          user_id: string
-          workshop_id: string
+          tshirt_option: string | null
+          user_id: string | null
+          workshop_id: string | null
         }
         Insert: {
-          city: string
+          city?: string | null
           created_at?: string
           email: string
           first_name: string
           id?: string
-          last_name: string
-          phone_number: string
+          last_name?: string | null
+          message?: string | null
+          phone_number?: string | null
+          requested_date?: string | null
+          requester_email?: string | null
+          requester_name?: string | null
           reservation_timestamp?: string
           seat_number?: number | null
           status?: string
-          tshirt_option: string
-          user_id: string
-          workshop_id: string
+          tshirt_option?: string | null
+          user_id?: string | null
+          workshop_id?: string | null
         }
         Update: {
-          city?: string
+          city?: string | null
           created_at?: string
           email?: string
           first_name?: string
           id?: string
-          last_name?: string
-          phone_number?: string
+          last_name?: string | null
+          message?: string | null
+          phone_number?: string | null
+          requested_date?: string | null
+          requester_email?: string | null
+          requester_name?: string | null
           reservation_timestamp?: string
           seat_number?: number | null
           status?: string
-          tshirt_option?: string
-          user_id?: string
-          workshop_id?: string
+          tshirt_option?: string | null
+          user_id?: string | null
+          workshop_id?: string | null
         }
         Relationships: [
           {

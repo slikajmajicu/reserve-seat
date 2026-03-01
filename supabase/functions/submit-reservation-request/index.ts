@@ -12,7 +12,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// ── Email validation ──────────────────────────────────────────────────────────
 const isValidEmail = (email: string): boolean => {
   const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
   if (!emailRegex.test(email)) return false;
@@ -28,7 +27,6 @@ const isValidEmail = (email: string): boolean => {
   return !blockedDomains.includes(domain);
 };
 
-// ── Sanitize input ───────────────────────────────────────────────────────────
 const sanitize = (input: string): string =>
   input
     .replace(/&/g, "&amp;")
@@ -39,6 +37,12 @@ const sanitize = (input: string): string =>
     .trim()
     .substring(0, 500);
 
+const jsonResponse = (body: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -48,51 +52,40 @@ serve(async (req) => {
     const body = await req.json();
     const { requester_name, requester_email, requested_date, message, honeypot, user_id } = body;
 
-    // ── HONEYPOT CHECK ─────────────────────────────────────────────────────
+    // Honeypot check — silent fake success
     if (honeypot && honeypot.trim() !== "") {
       console.warn("Honeypot triggered:", requester_email);
-      return new Response(
-        JSON.stringify({ success: true }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ success: true });
     }
 
-    // ── INPUT VALIDATION ───────────────────────────────────────────────────
+    // Validate name
     if (!requester_name || requester_name.trim().length < 2) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Please enter your full name." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ success: false, error: "Please enter your full name." }, 400);
     }
 
+    // Validate email
     if (!requester_email || !isValidEmail(requester_email.trim())) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Please enter a valid email address." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ success: false, error: "Please enter a valid email address." }, 400);
     }
 
+    // Validate date
     if (!requested_date) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Please select a date." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ success: false, error: "Please select a date." }, 400);
     }
 
     const selectedDate = new Date(requested_date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (selectedDate < today) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Please select a future date." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ success: false, error: "Please select a future date." }, 400);
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
     const cleanEmail = requester_email.trim().toLowerCase();
+    const cleanName = sanitize(requester_name);
+    const cleanMessage = message ? sanitize(message) : null;
 
-    // ── RATE LIMIT CHECK ───────────────────────────────────────────────────
+    // Rate limit check — 3 per email per 24h
     const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
     const { count, error: countError } = await supabase
@@ -104,23 +97,20 @@ serve(async (req) => {
     if (countError) throw countError;
 
     if ((count ?? 0) >= 3) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "You have reached the maximum of 3 reservation requests in 24 hours. Please try again tomorrow.",
-        }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({
+        success: false,
+        error: "You have reached the maximum of 3 reservation requests in 24 hours. Please try again tomorrow.",
+      }, 429);
     }
 
-    // ── SANITIZE INPUTS ────────────────────────────────────────────────────
-    const cleanName = sanitize(requester_name);
-    const cleanMessage = message ? sanitize(message) : null;
-
-    // ── INSERT RESERVATION ─────────────────────────────────────────────────
+    // Insert reservation with new columns
     const { data: reservation, error: insertError } = await supabase
       .from("reservations")
       .insert({
+        requester_name: cleanName,
+        requester_email: cleanEmail,
+        requested_date: requested_date,
+        message: cleanMessage,
         first_name: cleanName,
         email: cleanEmail,
         last_name: "",
@@ -128,26 +118,24 @@ serve(async (req) => {
         city: "",
         tshirt_option: "",
         status: "pending",
-        user_id: user_id || "00000000-0000-0000-0000-000000000000",
-        workshop_id: "00000000-0000-0000-0000-000000000000",
+        user_id: user_id || null,
+        workshop_id: null,
       })
       .select()
       .single();
 
     if (insertError) throw insertError;
 
-    // ── LOG RATE LIMIT RECORD ──────────────────────────────────────────────
-    await supabase
-      .from("reservation_request_limits")
-      .insert({ email: cleanEmail });
+    // Log rate limit
+    await supabase.from("reservation_request_limits").insert({ email: cleanEmail });
 
-    // ── CLEANUP OLD RATE LIMIT RECORDS ─────────────────────────────────────
+    // Cleanup old rate records
     await supabase
       .from("reservation_request_limits")
       .delete()
       .lt("created_at", cutoff);
 
-    // ── NOTIFY ADMIN ───────────────────────────────────────────────────────
+    // Notify admin
     try {
       const formattedDate = new Date(requested_date).toLocaleDateString("en-US", {
         weekday: "long", year: "numeric", month: "long", day: "numeric",
@@ -198,15 +186,9 @@ serve(async (req) => {
       console.error("Admin notification failed:", emailErr);
     }
 
-    return new Response(
-      JSON.stringify({ success: true, reservation_id: reservation.id }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResponse({ success: true, reservation_id: reservation.id });
   } catch (err) {
     console.error("submit-reservation-request error:", err);
-    return new Response(
-      JSON.stringify({ success: false, error: "Something went wrong. Please try again." }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResponse({ success: false, error: "Something went wrong. Please try again." }, 500);
   }
 });

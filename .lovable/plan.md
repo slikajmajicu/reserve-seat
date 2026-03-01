@@ -1,118 +1,124 @@
+## Fix Plan: Edge Function Error, Admin Access, and Homepage
 
+### Issue 1: Reservation form returns 500 error
 
-# Anti-Spam Protection for Guest Reservation Requests
+**Root cause**: There's a database trigger enforce_reservation_rate_limit_trigger on the reservations table that fires BEFORE INSERT. This trigger requires user_id to be NOT NULL (it checks reservation_rate_limits which has user_id NOT NULL). Guest reservations send user_id = null, so the trigger crashes with a NOT NULL constraint violation.
 
-## Overview
-Add three layers of spam protection to the public reservation request form -- honeypot field, server-side email validation with disposable domain blocking, and per-email rate limiting -- all without external services or captcha.
+Additionally, the update_workshop_count_trigger will also fail for guest reservations since workshop_id is null.
 
-## What Changes
+**Fix**:
 
-### 1. New Database Table: `reservation_request_limits`
-A simple table to track how many requests each email address has made, enabling per-email rate limiting (max 3 per 24 hours). RLS allows anonymous inserts (needed for guest flow). Old records are cleaned up automatically by the edge function on each request.
+- Run a database migration to modify the enforce_reservation_rate_limit() function to skip execution when NEW.user_id IS NULL (guest submissions)
+- Modify the update_workshop_count() function to skip when NEW.workshop_id IS NULL
 
-### 2. New Edge Function: `submit-reservation-request`
-A single server-side endpoint that consolidates reservation insertion and admin notification. It performs:
-- Honeypot check (silent fake-success if triggered)
-- Input validation (name length, email format, future date)
-- Disposable email domain blocking (mailinator, yopmail, tempmail, etc.)
-- Rate limit enforcement (3 requests per email per 24 hours, HTTP 429)
-- Input sanitization (XSS prevention, length limits)
-- Reservation insert (via service role key, bypassing RLS)
-- Admin email notification via Resend (fire-and-forget)
+### Issue 2: Cannot access admin dashboard
 
-This replaces what would otherwise be a direct client-side insert + separate `notify-admin-new-request` call, making the architecture cleaner and more secure.
+**Root cause**: The user bc74762c-bcf9-40a1-98c9-e7e0098c17e5 (**[nemanjatestlova@gmail.com](mailto:nemanjatestlova@gmail.com)**) has no entry in the user_roles table. The verify-admin function correctly returns {"isAdmin": false}.
 
-### 3. Frontend: Honeypot Field + Edge Function Call
-The WorkshopCalendar component (which will be rewritten as part of the homepage redesign) will include:
-- A hidden honeypot input field (invisible to users, filled by bots)
-- Form submission via `supabase.functions.invoke("submit-reservation-request")` instead of direct database insert
-- Error handling for rate limit (429) and validation errors
+**Fix**:
 
-## Dependencies on Previous Plans
-This plan builds on two previously approved but not yet implemented plans:
-1. **Homepage redesign** -- makes reservation columns nullable, adds `message` column, redesigns WorkshopCalendar with inline form
-2. **Admin notification flow** -- adds confirm/reject edge functions and PendingReservations admin component
+- Insert the admin role for this user into the user_roles table via a database migration
 
-The `submit-reservation-request` edge function replaces the previously planned `notify-admin-new-request` function, consolidating both operations into one call.
+### Issue 3: Homepage as the main landing page
+
+**Status**: The homepage is already the main page at /. The blank screen mentioned is likely caused by Issue 1 (the 500 error). No code changes needed here -- fixing the edge function error should resolve this.
 
 ---
 
-## Technical Details
+### Technical Details
 
-### Database Migration
+**Migration SQL for trigger fixes:**
 
-```sql
-CREATE TABLE IF NOT EXISTS public.reservation_request_limits (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  email TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
+```
+-- Fix: skip rate limit trigger for guest (no user_id) reservations
+CREATE OR REPLACE FUNCTION public.enforce_reservation_rate_limit()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public'
+AS $$
+DECLARE attempt_count integer;
+BEGIN
+  IF NEW.user_id IS NULL THEN RETURN NEW; END IF;
+  -- ... existing logic unchanged
+END;
+$$;
 
-CREATE INDEX idx_request_limits_email
-  ON public.reservation_request_limits(email);
+-- Fix: skip workshop count update when no workshop_id
+CREATE OR REPLACE FUNCTION public.update_workshop_count()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public'
+AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.workshop_id IS NULL THEN RETURN NULL; END IF;
+    -- ... existing logic
+  ELSIF TG_OP = 'DELETE' THEN
+    IF OLD.workshop_id IS NULL THEN RETURN NULL; END IF;
+    -- ... existing logic
+  END IF;
+  RETURN NULL;
+END;
+$$;
 
-CREATE INDEX idx_request_limits_created_at
-  ON public.reservation_request_limits(created_at);
-
-ALTER TABLE public.reservation_request_limits ENABLE ROW LEVEL SECURITY;
-
--- Service role inserts via edge function; no direct client access needed
-CREATE POLICY "Service role manages rate limits"
-  ON public.reservation_request_limits FOR ALL
-  USING (false);
+-- Grant admin role
+INSERT INTO public.user_roles (user_id, role)
+VALUES ('bc74762c-bcf9-40a1-98c9-e7e0098c17e5', 'admin')
+ON CONFLICT (user_id, role) DO NOTHING{
 ```
 
-Note: RLS policy blocks all client access. The edge function uses the service role key to insert/delete/query, so no public policy is needed. This is more secure than allowing anonymous inserts.
+  "action": "full_system_recovery_and_upgrade",
 
-### Files to Create
-- `supabase/functions/submit-reservation-request/index.ts` -- Consolidated edge function with all three anti-spam layers + reservation insert + admin notification
-- The previously planned `notify-admin-new-request` function is no longer needed as a separate function
+  "database_migrations": [
 
-### Files to Modify
-- `src/components/WorkshopCalendar.tsx` -- Add honeypot state and hidden field; submit via edge function instead of direct insert (this modification happens as part of the full calendar rewrite from the homepage redesign plan)
+    {
 
-### Configuration
-Add to `supabase/config.toml`:
-```toml
-[functions.submit-reservation-request]
-verify_jwt = false
-```
+      "description": "Fix Trigger Logic & Grant Admin",
 
-### Edge Function: `submit-reservation-request`
-Uses existing secrets (all already configured):
-- `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` -- database access
-- `RESEND_API_KEY`, `ADMIN_EMAIL` -- admin notification email
+      "sql": "CREATE OR REPLACE FUNCTION public.enforce_reservation_rate_limit() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER AS $$ BEGIN IF NEW.user_id IS NULL THEN RETURN NEW; END IF; /* Existing logic */ RETURN NEW; END; $$; CREATE OR REPLACE FUNCTION public.update_workshop_count() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER AS $$ BEGIN IF TG_OP = 'INSERT' AND NEW.workshop_id IS NOT NULL THEN /* Increment logic */ ELSIF TG_OP = 'DELETE' AND OLD.workshop_id IS NOT NULL THEN /* Decrement logic */ END IF; RETURN NULL; END; $$; INSERT INTO public.user_roles (user_id, role) VALUES ('bc74762c-bcf9-40a1-98c9-e7e0098c17e5', 'admin') ON CONFLICT DO NOTHING;"
 
-Request body:
-```text
-{
-  requester_name: string,
-  requester_email: string,
-  requested_date: string (YYYY-MM-DD),
-  message: string (optional),
-  honeypot: string (must be empty),
-  user_id: string | null
+    },
+
+    {
+
+      "description": "Anti-Spam Table",
+
+      "sql": "CREATE TABLE IF NOT EXISTS public.reservation_request_limits (id UUID DEFAULT gen_random_uuid() PRIMARY KEY, email TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW()); CREATE INDEX idx_request_limits_email ON public.reservation_request_limits(email); ALTER TABLE public.reservation_request_limits ENABLE ROW LEVEL SECURITY; CREATE POLICY \"Public insert for rate limiting\" ON public.reservation_request_limits FOR INSERT WITH CHECK (true);"
+
+    }
+
+  ],
+
+  "edge_function_update": {
+
+    "path": "supabase/functions/submit-reservation-request/index.ts",
+
+    "features": [
+
+      "Switch from Resend to Gmail SMTP using '[https://deno.land/x/smtp/mod.ts](https://deno.land/x/smtp/mod.ts)'.",
+
+      "Implement Honeypot check (fail silently if 'website' field is filled).",
+
+      "Implement Rate Limit check (check 'reservation_request_limits' for > 3 requests/24h per email).",
+
+      "Sanitize inputs to prevent XSS."
+
+    ],
+
+    "secrets_required": ["SMTP_USER", "SMTP_PASS", "ADMIN_EMAIL"]
+
+  },
+
+  "frontend_changes": {
+
+    "component": "src/components/WorkshopCalendar.tsx",
+
+    "tasks": [
+
+      "Add hidden honeypot input field with style 'position: absolute; left: -9999px'.",
+
+      "Update handleSubmit to call 'supabase.functions.invoke(\"submit-reservation-request\")'.",
+
+      "Explicitly pass 'user_id: session?.user?.id || null' to match the new database trigger logic."
+
+    ]
+
+  }
+
 }
-```
-
-Response codes:
-- 200: Success (or fake success for honeypot)
-- 400: Validation error (name too short, invalid email, past date)
-- 429: Rate limit exceeded (3 per 24 hours per email)
-- 500: Server error
-
-### Anti-Spam Layers Summary
-
-| Layer | Where | What it catches |
-|-------|-------|----------------|
-| Honeypot | Client + Server | Automated bots that fill all form fields |
-| Email validation | Server | Disposable/fake email addresses |
-| Rate limiting | Server + Database | Repeated submissions from same email |
-
-### Implementation Order
-This will be implemented as part of the full batch alongside the homepage redesign and admin flow:
-1. Database migrations (nullable columns + rate limits table)
-2. Edge functions (submit-reservation-request, confirm-reservation, reject-reservation)
-3. Homepage UI (Index.tsx, WorkshopCalendar.tsx with honeypot + edge function call)
-4. Admin dashboard (PendingReservations.tsx with confirm/reject dialogs)
-

@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Clock, Users, CalendarDays, Send, Loader2 } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Clock, Users, CalendarDays, Send, Loader2, Info, User as UserIcon, Mail, Phone as PhoneIcon, Shirt } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { motion } from "framer-motion";
 
 type Workshop = {
   id: string;
@@ -22,11 +24,22 @@ type Workshop = {
   is_active: boolean;
 };
 
+const fieldVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.1, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const },
+  }),
+};
+
 export default function WorkshopCalendar() {
   const [workshops, setWorkshops] = useState<Workshop[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [tshirtOption, setTshirtOption] = useState<"own" | "buy_onsite" | "">("");
   const [message, setMessage] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -45,7 +58,6 @@ export default function WorkshopCalendar() {
 
       if (!error && data) {
         setWorkshops(data);
-        // Auto-select nearest available date
         if (data.length > 0) {
           setSelectedDate(new Date(data[0].date + "T00:00:00"));
         }
@@ -76,12 +88,29 @@ export default function WorkshopCalendar() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Button clicked");
 
     if (!selectedDate || !name.trim() || !email.trim()) {
       toast({
         title: "Missing fields",
         description: "Please fill in your name, email, and select a date.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!phone.trim() || !/^[+]?[\d\s\-().]{7,20}$/.test(phone.trim())) {
+      toast({
+        title: "Invalid phone number",
+        description: "Please enter a valid phone number.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!tshirtOption) {
+      toast({
+        title: "T-shirt option required",
+        description: "Please select a T-shirt option.",
         variant: "destructive",
       });
       return;
@@ -100,6 +129,8 @@ export default function WorkshopCalendar() {
             requester_email: email.trim(),
             requested_date: requestedDate,
             message: message.trim() || null,
+            phone_number: phone.trim(),
+            tshirt_option: tshirtOption,
             honeypot,
             user_id: null,
           },
@@ -112,6 +143,8 @@ export default function WorkshopCalendar() {
         setSubmitted(true);
         setName("");
         setEmail("");
+        setPhone("");
+        setTshirtOption("");
         setMessage("");
         toast({
           title: "Request submitted!",
@@ -164,7 +197,7 @@ export default function WorkshopCalendar() {
       <div className="space-y-4">
         {selectedDate ? (
           <>
-            <h3 className="text-lg font-semibold font-heading">
+            <h3 className="text-lg font-semibold font-serif">
               {selectedDate.toLocaleDateString("en-US", {
                 weekday: "long",
                 month: "long",
@@ -183,7 +216,7 @@ export default function WorkshopCalendar() {
                   <Card key={workshop.id} className="border">
                     <CardContent className="p-4 space-y-3">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-semibold font-heading">
+                        <h4 className="font-semibold font-serif">
                           {workshop.title}
                         </h4>
                         <Badge
@@ -219,7 +252,7 @@ export default function WorkshopCalendar() {
             {submitted ? (
               <Card className="border-primary/20 bg-primary/5">
                 <CardContent className="p-6 text-center space-y-2">
-                  <h4 className="font-semibold font-heading text-lg">
+                  <h4 className="font-semibold font-serif text-lg">
                     ✅ Request Submitted!
                   </h4>
                   <p className="text-sm text-muted-foreground">
@@ -237,99 +270,172 @@ export default function WorkshopCalendar() {
                 </CardContent>
               </Card>
             ) : (
-              <Card>
-                <CardContent className="p-5">
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <h4 className="font-semibold font-heading">
-                      Request a Reservation
-                    </h4>
+              <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                <Card>
+                  <CardContent className="p-5">
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                      <h4 className="font-semibold font-serif text-lg">
+                        Request a Reservation
+                      </h4>
 
-                    {/* Honeypot — invisible to real users */}
-                    <div
-                      aria-hidden="true"
-                      style={{
-                        position: "absolute",
-                        left: "-9999px",
-                        top: "-9999px",
-                        opacity: 0,
-                        height: 0,
-                        overflow: "hidden",
-                      }}
-                    >
-                      <label htmlFor="website">Website</label>
-                      <input
-                        type="text"
-                        id="website"
-                        name="website"
-                        tabIndex={-1}
-                        autoComplete="off"
-                        value={honeypot}
-                        onChange={(e) => setHoneypot(e.target.value)}
-                      />
-                    </div>
+                      {/* Honeypot — invisible to real users */}
+                      <div
+                        aria-hidden="true"
+                        style={{
+                          position: "absolute",
+                          left: "-9999px",
+                          top: "-9999px",
+                          opacity: 0,
+                          height: 0,
+                          overflow: "hidden",
+                        }}
+                      >
+                        <label htmlFor="website">Website</label>
+                        <input
+                          type="text"
+                          id="website"
+                          name="website"
+                          tabIndex={-1}
+                          autoComplete="off"
+                          value={honeypot}
+                          onChange={(e) => setHoneypot(e.target.value)}
+                        />
+                      </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="res-name">Your Name</Label>
-                      <Input
-                        id="res-name"
-                        placeholder="Full name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        required
-                        maxLength={100}
-                      />
-                    </div>
+                      {/* Name */}
+                      <motion.div custom={0} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }} className="space-y-2">
+                        <Label htmlFor="res-name">Your Name</Label>
+                        <div className="relative">
+                          <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="res-name"
+                            placeholder="Full name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            required
+                            maxLength={100}
+                            className="pl-10 h-11 transition-all focus-visible:ring-2 focus-visible:ring-amber-500/30 focus-visible:border-amber-600"
+                          />
+                        </div>
+                      </motion.div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="res-email">Email</Label>
-                      <Input
-                        id="res-email"
-                        type="email"
-                        placeholder="you@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        maxLength={255}
-                      />
-                    </div>
+                      {/* Email */}
+                      <motion.div custom={1} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }} className="space-y-2">
+                        <Label htmlFor="res-email">Email</Label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="res-email"
+                            type="email"
+                            placeholder="you@example.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                            maxLength={255}
+                            className="pl-10 h-11 transition-all focus-visible:ring-2 focus-visible:ring-amber-500/30 focus-visible:border-amber-600"
+                          />
+                        </div>
+                      </motion.div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="res-message">
-                        Message{" "}
-                        <span className="text-muted-foreground font-normal">
-                          (optional)
-                        </span>
-                      </Label>
-                      <Textarea
-                        id="res-message"
-                        placeholder="Any notes or questions..."
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        maxLength={500}
-                        rows={3}
-                      />
-                    </div>
+                      {/* Phone */}
+                      <motion.div custom={2} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }} className="space-y-2">
+                        <Label htmlFor="res-phone">Phone Number</Label>
+                        <div className="relative">
+                          <PhoneIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="res-phone"
+                            type="tel"
+                            placeholder="+381 63 123 4567"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            required
+                            maxLength={20}
+                            className="pl-10 h-11 transition-all focus-visible:ring-2 focus-visible:ring-amber-500/30 focus-visible:border-amber-600"
+                          />
+                        </div>
+                      </motion.div>
 
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={submitting}
-                    >
-                      {submitting ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Submitting…
-                        </>
-                      ) : (
-                        <>
-                          <Send className="h-4 w-4 mr-2" />
-                          Submit Request
-                        </>
-                      )}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
+                      {/* T-Shirt Option */}
+                      <motion.div custom={3} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }} className="space-y-3">
+                        <Label className="flex items-center gap-2">
+                          <Shirt className="h-4 w-4 text-muted-foreground" />
+                          T-Shirt Option
+                        </Label>
+                        <RadioGroup
+                          value={tshirtOption}
+                          onValueChange={(val) => setTshirtOption(val as "own" | "buy_onsite")}
+                          className="space-y-2"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <RadioGroupItem value="own" id="tshirt-own" />
+                            <Label htmlFor="tshirt-own" className="font-normal cursor-pointer">
+                              I am bringing my own T-shirt
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-3">
+                            <RadioGroupItem value="buy_onsite" id="tshirt-buy" />
+                            <Label htmlFor="tshirt-buy" className="font-normal cursor-pointer">
+                              I will buy a T-shirt onsite
+                            </Label>
+                          </div>
+                        </RadioGroup>
+                      </motion.div>
+
+                      {/* Message */}
+                      <motion.div custom={4} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }} className="space-y-2">
+                        <Label htmlFor="res-message">
+                          Message{" "}
+                          <span className="text-muted-foreground font-normal">
+                            (optional)
+                          </span>
+                        </Label>
+                        <Textarea
+                          id="res-message"
+                          placeholder="Any notes or questions..."
+                          value={message}
+                          onChange={(e) => setMessage(e.target.value)}
+                          maxLength={500}
+                          rows={3}
+                          className="transition-all focus-visible:ring-2 focus-visible:ring-amber-500/30 focus-visible:border-amber-600"
+                        />
+                      </motion.div>
+
+                      <motion.div custom={5} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }}>
+                        <Button
+                          type="submit"
+                          className="w-full"
+                          disabled={submitting}
+                        >
+                          {submitting ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Submitting…
+                            </>
+                          ) : (
+                            <>
+                              <Send className="h-4 w-4 mr-2" />
+                              Submit Request
+                            </>
+                          )}
+                        </Button>
+
+                        {/* Cancellation policy */}
+                        <div className="flex items-start gap-2 mt-4 text-xs text-muted-foreground">
+                          <Info className="h-4 w-4 mt-0.5 shrink-0" />
+                          <p>
+                            Note: Reservations can be cancelled up to 24 hours before the event. Cancellations on the day of the event may incur a participation fee.
+                          </p>
+                        </div>
+                      </motion.div>
+                    </form>
+                  </CardContent>
+                </Card>
+              </motion.div>
             )}
           </>
         ) : (

@@ -223,7 +223,7 @@ export default function WorkshopCalendar() {
                     ✅ Request Submitted!
                   </h4>
                   <p className="text-sm text-muted-foreground">
-                    We'll review your request and get back to you by email.
+                    Check your email for confirmation. We'll review your request and get back to you shortly.
                   </p>
                   <Button
                     type="button"

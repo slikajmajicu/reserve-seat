@@ -62,7 +62,16 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { requester_name, requester_email, requested_date, message, honeypot, user_id } = body;
+    const { requester_name, requester_email, requested_date, message, honeypot, user_id, phone_number, tshirt_option } = body as {
+      requester_name?: string;
+      requester_email?: string;
+      requested_date?: string;
+      message?: string;
+      honeypot?: string;
+      user_id?: string;
+      phone_number?: string;
+      tshirt_option?: string;
+    };
 
     // Honeypot check — silent fake success
     if (honeypot && honeypot.trim() !== "") {
@@ -90,6 +99,23 @@ serve(async (req) => {
     today.setHours(0, 0, 0, 0);
     if (selectedDate < today) {
       return jsonResponse({ success: false, error: "Please select a future date." }, 400);
+    }
+
+    // Validate phone_number if provided
+    if (phone_number !== undefined && phone_number !== null) {
+      const trimmedPhone = typeof phone_number === "string" ? phone_number.trim() : "";
+      if (trimmedPhone.length > 0 && !/^[+]?[\d\s\-().]{7,20}$/.test(trimmedPhone)) {
+        return jsonResponse({ success: false, error: "Please enter a valid phone number." }, 400);
+      }
+    }
+
+    // Validate tshirt_option if provided — must be exactly 'own' or 'buy_onsite'
+    const validTshirtOptions = ["own", "buy_onsite"];
+    const cleanTshirt = tshirt_option && typeof tshirt_option === "string" && tshirt_option.trim() !== ""
+      ? tshirt_option.trim()
+      : null;
+    if (cleanTshirt !== null && !validTshirtOptions.includes(cleanTshirt)) {
+      return jsonResponse({ success: false, error: "Please select a valid T-shirt option." }, 400);
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
@@ -125,10 +151,10 @@ serve(async (req) => {
         message: cleanMessage,
         first_name: cleanName,
         email: cleanEmail,
-        last_name: "",
-        phone_number: "",
-        city: "",
-        tshirt_option: null,
+        last_name: null,
+        phone_number: phone_number ? phone_number.trim() : null,
+        city: null,
+        tshirt_option: cleanTshirt,
         status: "pending",
         user_id: user_id || null,
         workshop_id: null,
@@ -234,6 +260,12 @@ serve(async (req) => {
     return jsonResponse({ success: true, reservation_id: reservation.id });
   } catch (err) {
     console.error("submit-reservation-request error:", err);
+    // Handle specific constraint violations
+    const errMsg = err instanceof Error ? err.message : String(err);
+    const errCode = (err as Record<string, unknown>)?.code;
+    if (errCode === "23514" || errMsg.includes("reservations_tshirt_option_check")) {
+      return jsonResponse({ success: false, error: "Invalid T-shirt option selected. Please refresh and try again." }, 400);
+    }
     return jsonResponse({ success: false, error: "Something went wrong. Please try again." }, 500);
   }
 });

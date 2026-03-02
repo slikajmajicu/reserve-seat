@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { Loader2, Users, CheckCircle2, AlertCircle, Calendar } from "lucide-react";
+import { Loader2, Users, CheckCircle2, AlertCircle, Calendar, Info } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 const formSchema = z.object({
@@ -17,9 +17,9 @@ const formSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(100),
   lastName: z.string().min(1, "Last name is required").max(100),
   email: z.string().email("Invalid email address").max(255),
-  phoneNumber: z.string().min(1, "Phone number is required").max(50),
+  phoneNumber: z.string().min(1, "Phone number is required").regex(/^[+]?[\d\s\-().]{7,20}$/, "Please enter a valid phone number").max(50),
   city: z.string().min(1, "City is required").max(100),
-  bringOwnTshirt: z.boolean().default(false)
+  tshirtOption: z.enum(["own", "buy_onsite"], { required_error: "Please select a T-shirt option" })
 });
 type Workshop = {
   id: string;
@@ -46,7 +46,7 @@ export default function ReservationForm() {
       email: "",
       phoneNumber: "",
       city: "",
-      bringOwnTshirt: false
+      tshirtOption: undefined as unknown as "own" | "buy_onsite"
     }
   });
   const selectedWorkshopId = form.watch("workshopId");
@@ -157,7 +157,7 @@ export default function ReservationForm() {
         email: values.email,
         phone_number: values.phoneNumber,
         city: values.city,
-        tshirt_option: values.bringOwnTshirt ? "own" : "buy_onsite",
+        tshirt_option: values.tshirtOption,
         status,
         seat_number: seatNumber,
         user_id: user.id
@@ -210,7 +210,7 @@ export default function ReservationForm() {
           email: values.email,
           phoneNumber: values.phoneNumber,
           city: values.city,
-          tshirtOption: values.bringOwnTshirt ? "own" : "buy_onsite",
+          tshirtOption: values.tshirtOption,
           workshopTitle: workshop.title,
           workshopDate: workshopDateTime,
           status,
@@ -478,20 +478,23 @@ export default function ReservationForm() {
                       </FormItem>} />
                 </div>
 
-                <FormField control={form.control} name="bringOwnTshirt" render={({
+                <FormField control={form.control} name="tshirtOption" render={({
                 field
-              }) => <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+              }) => <FormItem className="space-y-3">
+                      <FormLabel className="text-base font-semibold">T-Shirt Option *</FormLabel>
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-col space-y-2">
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl><RadioGroupItem value="own" /></FormControl>
+                            <FormLabel className="font-normal cursor-pointer">I am bringing my own T-shirt</FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl><RadioGroupItem value="buy_onsite" /></FormControl>
+                            <FormLabel className="font-normal cursor-pointer">I will buy a T-shirt onsite</FormLabel>
+                          </FormItem>
+                        </RadioGroup>
                       </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel className="cursor-pointer">
-                          I'm bringing my own T-shirt
-                        </FormLabel>
-                        <p className="text-sm text-muted-foreground">
-                          Leave unchecked if you plan to buy on-site
-                        </p>
-                      </div>
+                      <FormMessage />
                     </FormItem>} />
 
                 <Button type="submit" disabled={submitting || !selectedWorkshop || isFull} className="w-full h-12 text-base font-extrabold text-primary-foreground bg-destructive">
@@ -500,6 +503,13 @@ export default function ReservationForm() {
                       Reserving...
                     </> : "Reserve My Spot"}
                 </Button>
+
+                <div className="flex items-start gap-2 text-muted-foreground">
+                  <Info className="h-4 w-4 mt-0.5 shrink-0" />
+                  <p className="text-sm">
+                    Note: Reservations can be cancelled up to 24 hours before the event. Cancellations on the day of the event may incur a participation fee.
+                  </p>
+                </div>
               </form>
             </Form>
           </CardContent>

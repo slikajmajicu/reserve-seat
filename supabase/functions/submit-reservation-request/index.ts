@@ -190,8 +190,9 @@ serve(async (req) => {
   <div style="padding:28px 32px">
     <p style="margin:0 0 16px;font-size:15px">Hi ${cleanName},</p>
     <p style="margin:0 0 16px;font-size:15px">Thank you for your reservation request for <strong>${formattedDate}</strong>. We've received it and will review it shortly.</p>
-    <p style="margin:0 0 16px;font-size:15px">You'll receive a confirmation email once your spot is secured.</p>
+    <p style="margin:0 0 16px;font-size:15px;font-weight:600">You confirmed your spot and it is secured.</p>
     ${cleanMessage ? `<p style="margin:0 0 16px;font-size:13px;color:#71717a">Your message: "${cleanMessage}"</p>` : ""}
+    <p style="margin:0 0 16px;font-size:13px;color:#71717a;border-top:1px solid #e4e4e7;padding-top:12px"><strong>CANCELLATION POLICY:</strong> If you need to cancel, please do so at least 24 hours in advance. For late cancellations or no-shows, a participation fee will be charged via a payment link sent to your email.</p>
   </div>
   <div style="padding:16px 32px;background:#fafafa;text-align:center">
     <p style="margin:0;color:#a1a1aa;font-size:12px">reserve-seat.lovable.app · Belgrade, Serbia</p>

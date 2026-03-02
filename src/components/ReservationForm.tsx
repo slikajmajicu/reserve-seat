@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -9,9 +10,17 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { Loader2, Users, CheckCircle2, AlertCircle, Calendar, Info } from "lucide-react";
+import { Loader2, Users, CheckCircle2, AlertCircle, Calendar, Info, User as UserIcon, Mail, Phone, MapPin, Shirt } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+
+const fieldVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i: number) => ({
+    opacity: 1, y: 0,
+    transition: { delay: i * 0.1, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const }
+  })
+};
 const formSchema = z.object({
   workshopId: z.string().min(1, "Please select a workshop date"),
   firstName: z.string().min(1, "First name is required").max(100),
@@ -331,16 +340,17 @@ export default function ReservationForm() {
   }
   return <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 py-12 px-4">
       <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="mb-2 font-heading font-extrabold text-center text-8xl text-destructive">Workshop Reservation</h1>
+        <motion.div className="text-center mb-8" initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: "easeOut" }} viewport={{ once: true }}>
+          <h1 className="mb-2 font-serif font-extrabold text-center text-8xl text-destructive">Workshop Reservation</h1>
           <p className="text-muted-foreground font-body bg-inherit text-xl">
             Reserve your spot for our upcoming creative workshops
           </p>
-        </div>
+        </motion.div>
 
+        <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }} viewport={{ once: true }}>
         <Card className="my-0 py-0 shadow-2xl">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 font-heading font-extrabold text-2xl text-destructive">
+            <CardTitle className="flex items-center gap-2 font-serif font-extrabold text-2xl text-destructive">
               <Calendar className="border-destructive-foreground bg-primary-foreground w-[15px] h-[15px] text-red-500" />
               Book Your Workshop
             </CardTitle>
@@ -350,7 +360,8 @@ export default function ReservationForm() {
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mx-0">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 mx-0">
+                <motion.div custom={0} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }}>
                 <FormField control={form.control} name="workshopId" render={({
                 field
               }) => <FormItem>
@@ -399,6 +410,7 @@ export default function ReservationForm() {
                       </Select>
                       <FormMessage />
                     </FormItem>} />
+                </motion.div>
 
                 {selectedWorkshop && <div className="p-4 bg-muted rounded-lg">
                     <div className="flex items-center justify-between mb-2">
@@ -424,13 +436,17 @@ export default function ReservationForm() {
                       </p>}
                   </div>}
 
+                <motion.div custom={1} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField control={form.control} name="firstName" render={({
                   field
                 }) => <FormItem>
                         <FormLabel>First Name *</FormLabel>
                         <FormControl>
-                          <Input placeholder="John" {...field} className="h-11" />
+                          <div className="relative focus-within:ring-2 focus-within:ring-amber-500/30 focus-within:border-amber-600 rounded-md">
+                            <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input placeholder="John" {...field} className="h-11 pl-10" />
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>} />
@@ -440,29 +456,42 @@ export default function ReservationForm() {
                 }) => <FormItem>
                         <FormLabel>Last Name *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Doe" {...field} className="h-11" />
+                          <div className="relative focus-within:ring-2 focus-within:ring-amber-500/30 focus-within:border-amber-600 rounded-md">
+                            <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input placeholder="Doe" {...field} className="h-11 pl-10" />
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>} />
                 </div>
+                </motion.div>
 
+                <motion.div custom={2} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }}>
                 <FormField control={form.control} name="email" render={({
                 field
               }) => <FormItem>
                       <FormLabel>Email *</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="john.doe@example.com" {...field} className="h-11" />
+                        <div className="relative focus-within:ring-2 focus-within:ring-amber-500/30 focus-within:border-amber-600 rounded-md">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input type="email" placeholder="john.doe@example.com" {...field} className="h-11 pl-10" />
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>} />
+                </motion.div>
 
+                <motion.div custom={3} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField control={form.control} name="phoneNumber" render={({
                   field
                 }) => <FormItem>
                         <FormLabel>Phone Number *</FormLabel>
                         <FormControl>
-                          <Input placeholder="+1 234 567 8900" {...field} className="h-11" />
+                          <div className="relative focus-within:ring-2 focus-within:ring-amber-500/30 focus-within:border-amber-600 rounded-md">
+                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input placeholder="+1 234 567 8900" {...field} className="h-11 pl-10" />
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>} />
@@ -472,16 +501,24 @@ export default function ReservationForm() {
                 }) => <FormItem>
                         <FormLabel>City *</FormLabel>
                         <FormControl>
-                          <Input placeholder="New York" {...field} className="h-11" />
+                          <div className="relative focus-within:ring-2 focus-within:ring-amber-500/30 focus-within:border-amber-600 rounded-md">
+                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input placeholder="New York" {...field} className="h-11 pl-10" />
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>} />
                 </div>
+                </motion.div>
 
+                <motion.div custom={4} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }}>
                 <FormField control={form.control} name="tshirtOption" render={({
                 field
               }) => <FormItem className="space-y-3">
-                      <FormLabel className="text-base font-semibold">T-Shirt Option *</FormLabel>
+                      <FormLabel className="text-base font-semibold flex items-center gap-2">
+                        <Shirt className="h-4 w-4 text-muted-foreground" />
+                        T-Shirt Option *
+                      </FormLabel>
                       <FormControl>
                         <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-col space-y-2">
                           <FormItem className="flex items-center space-x-3 space-y-0">
@@ -496,6 +533,7 @@ export default function ReservationForm() {
                       </FormControl>
                       <FormMessage />
                     </FormItem>} />
+                </motion.div>
 
                 <Button type="submit" disabled={submitting || !selectedWorkshop || isFull} className="w-full h-12 text-base font-extrabold text-primary-foreground bg-destructive">
                   {submitting ? <>
@@ -514,6 +552,7 @@ export default function ReservationForm() {
             </Form>
           </CardContent>
         </Card>
+        </motion.div>
       </div>
     </div>;
 }

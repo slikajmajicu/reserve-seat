@@ -1,92 +1,127 @@
+## Fix: Apply Missing Fields and Visual Upgrades to the Active Form
 
+### Root Cause
 
-## Visual Upgrade and Email Template Enhancement
+The homepage (`/`) renders `WorkshopCalendar.tsx`, which contains its own inline reservation form. The fully upgraded `ReservationForm.tsx` (with phone number, T-shirt radio group, Framer Motion animations, Lucide icons) exists but is **not used anywhere in the app** -- it was commented out in `Index.tsx`.
 
-### 1. Add Playfair Display Serif Font
+### Solution
 
-- Add Google Font import for "Playfair Display" in `index.html` (preload + stylesheet)
-- Add `font-serif` mapping in `tailwind.config.ts` pointing to `'Playfair Display', serif`
-- Apply serif font to section headings ("Workshop Reservation", "Book Your Workshop") and keep Montserrat for form labels/body text
+Update `WorkshopCalendar.tsx` to include the missing fields, validation, cancellation text, and visual enhancements -- matching all the requirements that were previously only applied to the unused `ReservationForm.tsx`.
 
-### 2. Add Framer Motion Animations (ReservationForm.tsx)
+### Changes to `src/components/WorkshopCalendar.tsx`
 
-- Install `framer-motion` package
-- Wrap the main form card in a `motion.div` with `whileInView` fade+slide-up animation (`initial={{ opacity: 0, y: 40 }}`, `whileInView={{ opacity: 1, y: 0 }}`)
-- Wrap each form field in a `motion.div` with staggered entrance (0.1s delay increments using `transition={{ delay: index * 0.1 }}`)
-- Add focus glow styles to inputs: a subtle amber-600 border-color and soft box-shadow on focus via Tailwind classes (`focus-within:ring-amber-500/30 focus-within:border-amber-600`)
+**1. Add missing form fields to the inline reservation form:**
 
-### 3. Add Lucide Icons Inside Inputs (ReservationForm.tsx)
+- **Phone Number** (required): `<Input>` with phone validation, `Phone` Lucide icon
+- **T-Shirt Option** (required): `RadioGroup` with two options:
+  - `"own"` -- "I am bringing my own T-shirt"
+  - `"buy_onsite"` -- "I will buy a T-shirt onsite"
 
-- Wrap each input in a relative container with an icon positioned at the start:
-  - First Name / Last Name: `User` icon
-  - Email: `Mail` icon
-  - Phone Number: `Phone` icon
-  - City: `MapPin` icon
-- T-Shirt section: add `Shirt` icon next to the label
-- Increase left padding on inputs (`pl-10`) to make room for icons
-- Icons styled as `absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4`
+**2. Add cancellation policy text:**
 
-### 4. Increase Vertical Spacing
+- Below the submit button, add muted text with `Info` icon: "Note: Reservations can be cancelled up to 24 hours before the event..."
 
-- Change form `space-y-6` to `space-y-8` for more breathing room between fields
+**3. Pass new fields to the Edge Function:**
 
-### 5. Update Email Template in Edge Function
+- Add `phone_number` and `tshirt_option` to the `submit-reservation-request` invocation body
+- The Edge Function already validates these fields
 
-Update the confirmation email HTML in `submit-reservation-request/index.ts` to include:
-- Updated body text: "You confirmed your spot and it is secured."
-- Cancellation policy paragraph: "If you need to cancel, please do so at least 24 hours in advance. For late cancellations or no-shows, a participation fee will be charged via a payment link sent to your email."
-- Include the guest's message if provided
+**4. Add Lucide icons inside existing inputs:**
 
-### 6. Update Success Toast
+- Name field: `User` icon
+- Email field: `Mail` icon
+- Phone field: `Phone` icon
+- Wrap inputs in relative containers with `pl-10` padding
 
-- Already says "Check your email for confirmation" -- will verify and keep consistent with the new email content
+**5. Apply Framer Motion animations:**
+
+- Import `motion` from `framer-motion`
+- Wrap the form card with fade+slide-up animation
+- Stagger field entrances with 0.1s delays
+
+**6. Apply Playfair Display serif font:**
+
+- Use `font-serif` class on "Request a Reservation" heading (font is already loaded in `index.html` and configured in `tailwind.config.ts`)
+
+### Changes to `supabase/functions/submit-reservation-request/index.ts`
+
+- Verify that `phone_number` and `tshirt_option` from the request body are correctly handled (they should already be validated from previous work -- just confirm the guest-request code path uses them in the DB insert)
+
+### No changes needed
+
+- `ReservationForm.tsx` -- remains as a secondary form for authenticated users (accessed via `/auth` flow). No changes needed.
+- `index.html`, `tailwind.config.ts` -- Playfair Display font and Framer Motion are already configured.
 
 ---
 
 ### Technical Details
 
-**New dependency:** `framer-motion`
+**New state variables in WorkshopCalendar:**
+
+```typescript
+const [phone, setPhone] = useState("");
+const [tshirtOption, setTshirtOption] = useState<"own" | "buy_onsite" | "">("");
+```
+
+**Validation before submit:**
+
+```typescript
+if (!phone.trim() || !/^[+]?[\d\s\-().]{7,20}$/.test(phone.trim())) {
+  toast({ title: "Invalid phone", description: "Please enter a valid phone number.", variant: "destructive" });
+  return;
+}
+if (!tshirtOption) {
+  toast({ title: "T-shirt option required", description: "Please select a T-shirt option.", variant: "destructive" });
+  return;
+}
+```
+
+**Edge function body update:**
+
+```typescript
+body: {
+  requester_name: name.trim(),
+  requester_email: email.trim(),
+  requested_date: requestedDate,
+  message: message.trim() || null,
+  phone_number: phone.trim(),
+  tshirt_option: tshirtOption,
+  honeypot,
+  user_id: null,
+}
+```
+
+**New imports:**
+
+```typescript
+import { motion } from "framer-motion";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Info, User as UserIcon, Mail, Phone as PhoneIcon, Shirt } from "lucide-react";
+```
 
 **Files to modify:**
-- `index.html` -- add Playfair Display font link
-- `tailwind.config.ts` -- add `serif` font family
-- `src/components/ReservationForm.tsx` -- animations, icons, focus styles, spacing
-- `supabase/functions/submit-reservation-request/index.ts` -- email template text update
 
-**Input icon pattern:**
-```tsx
-<div className="relative">
-  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-  <Input placeholder="John" {...field} className="h-11 pl-10" />
-</div>
-```
-
-**Framer Motion stagger pattern:**
-```tsx
-import { motion } from "framer-motion";
-
-const fieldVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i: number) => ({
-    opacity: 1, y: 0,
-    transition: { delay: i * 0.1, duration: 0.4, ease: "easeOut" }
-  })
-};
-
-// Per field:
-<motion.div custom={index} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }}>
-  {/* form field */}
-</motion.div>
-```
-
-**Focus glow CSS (added to input wrapper or via Tailwind):**
-```css
-focus-within:ring-2 focus-within:ring-amber-500/30 focus-within:border-amber-600
-```
-
-**Email template update (key paragraph change):**
-```html
-<p>Thank you for your reservation request for <strong>${formattedDate}</strong>.</p>
-<p>You confirmed your spot and it is secured.</p>
-<p style="...">CANCELLATION POLICY: If you need to cancel, please do so at least 24 hours in advance. For late cancellations or no-shows, a participation fee will be charged via a payment link sent to your email.</p>
-```
+- `src/components/WorkshopCalendar.tsx` (add fields, icons, animations, cancellation text)
+- `supabase/functions/submit-reservation-request/index.ts` (verify guest path handles phone_number and tshirt_option in insert)  
+{
+    "priority": "IMMEDIATE_UI_REPLACEMENT",
+    "status": "CRITICAL",
+    "observation": "The upgraded ReservationForm.tsx is NOT being used. The homepage is currently rendering an old, dull form inside WorkshopCalendar.tsx.",
+    "task": "Migrate all 'Vibe' upgrades into WorkshopCalendar.tsx immediately.",
+    "requirements": [
+      {
+        "id": "field_sync",
+        "instruction": "Add the mandatory 'Phone Number' (Input) and 'T-Shirt Option' (RadioGroup: 'own'/'buy_onsite') directly into the reservation form inside WorkshopCalendar.tsx. These must be required before the 'Request Reservation' button becomes active."
+      },
+      {
+        "id": "visual_sync",
+        "instruction": "Apply the Framer Motion 'whileInView' scroll animations and the 'Playfair Display' serif font to the headings inside WorkshopCalendar.tsx.",
+        "icons": "Add Lucide icons (User, Mail, Phone, Shirt) as absolute-positioned decorators inside the inputs with 'pl-10' padding."
+      },
+      {
+        "id": "submission_logic",
+        "instruction": "Update the 'handleGuestRequest' function in WorkshopCalendar.tsx to include the 'phone' and 'tshirtOption' state variables in the fetch body sent to the Edge Function."
+      }
+    ],
+    "technical_warning": "Do not create a new file. Modify the existing WorkshopCalendar.tsx so the changes are visible on the homepage (/). Ensure the 'Info' icon and cancellation text are added below the submit button."
+  }

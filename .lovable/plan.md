@@ -1,100 +1,92 @@
-## Enhance Reservation Form: T-Shirt Radio Group, Phone Validation, and Cancellation Policy
 
-### 1. Update Form Schema and T-Shirt Field (ReservationForm.tsx)
 
-**Replace the `bringOwnTshirt` boolean checkbox with a `tshirtOption` radio group:**
+## Visual Upgrade and Email Template Enhancement
 
-- Change the Zod schema: remove `bringOwnTshirt: z.boolean()`, add `tshirtOption: z.enum(["own", "buy_onsite"], { required_error: "Please select a T-shirt option" })`
-- Update `defaultValues`: remove `bringOwnTshirt`, add `tshirtOption: undefined` (forces user to pick one)
-- Replace the Checkbox field with a `RadioGroup` using two `RadioGroupItem` entries:
-  - `"own"` -- "I am bringing my own T-shirt"
-  - `"buy_onsite"` -- "I will buy a T-shirt onsite"
-- Update the `onSubmit` data mapping: change `tshirt_option: values.bringOwnTshirt ? "own" : "buy_onsite"` to `tshirt_option: values.tshirtOption`
-- Update the admin notification body similarly
+### 1. Add Playfair Display Serif Font
 
-**Add phone number format validation:**
+- Add Google Font import for "Playfair Display" in `index.html` (preload + stylesheet)
+- Add `font-serif` mapping in `tailwind.config.ts` pointing to `'Playfair Display', serif`
+- Apply serif font to section headings ("Workshop Reservation", "Book Your Workshop") and keep Montserrat for form labels/body text
 
-- Update the `phoneNumber` Zod rule to: `z.string().min(1, "Phone number is required").regex(/^[+]?[\d\s\-().]{7,20}$/, "Please enter a valid phone number").max(50)`
+### 2. Add Framer Motion Animations (ReservationForm.tsx)
 
-**Add cancellation policy text:**
+- Install `framer-motion` package
+- Wrap the main form card in a `motion.div` with `whileInView` fade+slide-up animation (`initial={{ opacity: 0, y: 40 }}`, `whileInView={{ opacity: 1, y: 0 }}`)
+- Wrap each form field in a `motion.div` with staggered entrance (0.1s delay increments using `transition={{ delay: index * 0.1 }}`)
+- Add focus glow styles to inputs: a subtle amber-600 border-color and soft box-shadow on focus via Tailwind classes (`focus-within:ring-amber-500/30 focus-within:border-amber-600`)
 
-- Below the submit button, add a small muted paragraph with a Lucide `Info` icon:
-`"Note: Reservations can be cancelled up to 24 hours before the event. Cancellations on the day of the event may incur a participation fee."`
+### 3. Add Lucide Icons Inside Inputs (ReservationForm.tsx)
 
-### 2. Update Edge Function (submit-reservation-request/index.ts)
+- Wrap each input in a relative container with an icon positioned at the start:
+  - First Name / Last Name: `User` icon
+  - Email: `Mail` icon
+  - Phone Number: `Phone` icon
+  - City: `MapPin` icon
+- T-Shirt section: add `Shirt` icon next to the label
+- Increase left padding on inputs (`pl-10`) to make room for icons
+- Icons styled as `absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4`
 
-- Add `phone_number` and `tshirt_option` to the destructured body fields
-- Validate `phone_number`: must be a non-empty string matching a basic phone regex
-- Validate `tshirt_option`: must be exactly `"own"` or `"buy_onsite"`; reject anything else with a 400 error
-- Pass validated `phone_number` and `tshirt_option` into the reservation insert (replacing the current hardcoded `null`/empty string values)
-- In the catch block, detect `reservations_tshirt_option_check` constraint errors and return a user-friendly 400 message
+### 4. Increase Vertical Spacing
 
-### 3. Import Updates
+- Change form `space-y-6` to `space-y-8` for more breathing room between fields
 
-- Add `RadioGroup, RadioGroupItem` import from `@/components/ui/radio-group`
-- Add `Info` to the lucide-react import  
-  
-**Add-on Instructions for absolute reliability:**
-  1. **Strict DB Sync:** Ensure the `tshirt_option` value sent to the database is strictly either `'own'` or `'buy_onsite'`. If the frontend sends an empty string, the Edge Function must catch it and return a 400 error before hitting the database.
-  2. **CORS Header Persistence:** In `supabase/functions/submit-reservation-request/index.ts`, ensure that **all** `return new Response()` calls (including the new 400 error for phone/t-shirt validation) include the `corsHeaders` object. Without this, the browser will show a 'CORS error' instead of the validation message.
-  3. **Constraint Handling:** Specifically handle the PostgreSQL error code `23514`. If the catch block sees this code, return a specific message: *'Invalid T-shirt option selected. Please refresh and try again.'*
-  4. **No Type 'any':** Maintain strict TypeScript types in the Edge Function when destructuring the request body.
-  5. **Clean UI:** In the `ReservationForm.tsx`, make sure the Lucide `Info` icon is vertically aligned with the cancellation text and has a size of `16px` for a clean, professional look."
+### 5. Update Email Template in Edge Function
+
+Update the confirmation email HTML in `submit-reservation-request/index.ts` to include:
+- Updated body text: "You confirmed your spot and it is secured."
+- Cancellation policy paragraph: "If you need to cancel, please do so at least 24 hours in advance. For late cancellations or no-shows, a participation fee will be charged via a payment link sent to your email."
+- Include the guest's message if provided
+
+### 6. Update Success Toast
+
+- Already says "Check your email for confirmation" -- will verify and keep consistent with the new email content
 
 ---
 
 ### Technical Details
 
-**Zod schema change:**
-
-```typescript
-const formSchema = z.object({
-  workshopId: z.string().min(1, "Please select a workshop date"),
-  firstName: z.string().min(1, "First name is required").max(100),
-  lastName: z.string().min(1, "Last name is required").max(100),
-  email: z.string().email("Invalid email address").max(255),
-  phoneNumber: z.string().min(1, "Phone number is required")
-    .regex(/^[+]?[\d\s\-().]{7,20}$/, "Please enter a valid phone number").max(50),
-  city: z.string().min(1, "City is required").max(100),
-  tshirtOption: z.enum(["own", "buy_onsite"], { required_error: "Please select a T-shirt option" }),
-});
-```
-
-**RadioGroup JSX (replacing checkbox):**
-
-```tsx
-<FormField control={form.control} name="tshirtOption" render={({ field }) => (
-  <FormItem className="space-y-3">
-    <FormLabel>T-Shirt Option *</FormLabel>
-    <FormControl>
-      <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-col space-y-2">
-        <FormItem className="flex items-center space-x-3 space-y-0">
-          <FormControl><RadioGroupItem value="own" /></FormControl>
-          <FormLabel className="font-normal cursor-pointer">I am bringing my own T-shirt</FormLabel>
-        </FormItem>
-        <FormItem className="flex items-center space-x-3 space-y-0">
-          <FormControl><RadioGroupItem value="buy_onsite" /></FormControl>
-          <FormLabel className="font-normal cursor-pointer">I will buy a T-shirt onsite</FormLabel>
-        </FormItem>
-      </RadioGroup>
-    </FormControl>
-    <FormMessage />
-  </FormItem>
-)} />
-```
-
-**Edge function validation additions:**
-
-```typescript
-if (!phone_number || !/^[+]?[\d\s\-().]{7,20}$/.test(phone_number.trim())) {
-  return jsonResponse({ success: false, error: "Please enter a valid phone number." }, 400);
-}
-if (!tshirt_option || !["own", "buy_onsite"].includes(tshirt_option)) {
-  return jsonResponse({ success: false, error: "Please select a valid T-shirt option." }, 400);
-}
-```
+**New dependency:** `framer-motion`
 
 **Files to modify:**
+- `index.html` -- add Playfair Display font link
+- `tailwind.config.ts` -- add `serif` font family
+- `src/components/ReservationForm.tsx` -- animations, icons, focus styles, spacing
+- `supabase/functions/submit-reservation-request/index.ts` -- email template text update
 
-- `src/components/ReservationForm.tsx` (schema, form field, submit mapping, cancellation text)
-- `supabase/functions/submit-reservation-request/index.ts` (validate and pass phone_number + tshirt_option)
+**Input icon pattern:**
+```tsx
+<div className="relative">
+  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+  <Input placeholder="John" {...field} className="h-11 pl-10" />
+</div>
+```
+
+**Framer Motion stagger pattern:**
+```tsx
+import { motion } from "framer-motion";
+
+const fieldVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i: number) => ({
+    opacity: 1, y: 0,
+    transition: { delay: i * 0.1, duration: 0.4, ease: "easeOut" }
+  })
+};
+
+// Per field:
+<motion.div custom={index} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }}>
+  {/* form field */}
+</motion.div>
+```
+
+**Focus glow CSS (added to input wrapper or via Tailwind):**
+```css
+focus-within:ring-2 focus-within:ring-amber-500/30 focus-within:border-amber-600
+```
+
+**Email template update (key paragraph change):**
+```html
+<p>Thank you for your reservation request for <strong>${formattedDate}</strong>.</p>
+<p>You confirmed your spot and it is secured.</p>
+<p style="...">CANCELLATION POLICY: If you need to cancel, please do so at least 24 hours in advance. For late cancellations or no-shows, a participation fee will be charged via a payment link sent to your email.</p>
+```

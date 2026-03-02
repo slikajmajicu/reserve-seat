@@ -1,9 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import nodemailer from "npm:nodemailer@6";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
+const SMTP_USER = Deno.env.get("SMTP_USER")!;
+const SMTP_PASS = Deno.env.get("SMTP_PASS")!;
 const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL")!;
 
 const corsHeaders = {
@@ -11,6 +13,16 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: SMTP_USER,
+    pass: SMTP_PASS,
+  },
+});
 
 const isValidEmail = (email: string): boolean => {
   const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
@@ -103,7 +115,7 @@ serve(async (req) => {
       }, 429);
     }
 
-    // Insert reservation with new columns
+    // Insert reservation
     const { data: reservation, error: insertError } = await supabase
       .from("reservations")
       .insert({
@@ -135,12 +147,40 @@ serve(async (req) => {
       .delete()
       .lt("created_at", cutoff);
 
-    // Notify admin
+    // Send emails via Gmail SMTP (non-blocking)
     try {
       const formattedDate = new Date(requested_date).toLocaleDateString("en-US", {
         weekday: "long", year: "numeric", month: "long", day: "numeric",
       });
 
+      // Confirmation email to the requester
+      const confirmationHtml = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:system-ui,-apple-system,sans-serif">
+<div style="max-width:520px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+  <div style="background:linear-gradient(135deg,#6d28d9,#7c3aed);padding:28px 32px;text-align:center">
+    <h1 style="margin:0;color:#fff;font-size:20px">✅ Reservation Request Received</h1>
+  </div>
+  <div style="padding:28px 32px">
+    <p style="margin:0 0 16px;font-size:15px">Hi ${cleanName},</p>
+    <p style="margin:0 0 16px;font-size:15px">Thank you for your reservation request for <strong>${formattedDate}</strong>. We've received it and will review it shortly.</p>
+    <p style="margin:0 0 16px;font-size:15px">You'll receive a confirmation email once your spot is secured.</p>
+    ${cleanMessage ? `<p style="margin:0 0 16px;font-size:13px;color:#71717a">Your message: "${cleanMessage}"</p>` : ""}
+  </div>
+  <div style="padding:16px 32px;background:#fafafa;text-align:center">
+    <p style="margin:0;color:#a1a1aa;font-size:12px">reserve-seat.lovable.app · Belgrade, Serbia</p>
+  </div>
+</div>
+</body></html>`;
+
+      await transporter.sendMail({
+        from: `Reserve Seat <${SMTP_USER}>`,
+        to: cleanEmail,
+        subject: `Your reservation request for ${formattedDate}`,
+        html: confirmationHtml,
+      });
+
+      // Admin notification email
       const adminHtml = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;background:#f4f4f5;font-family:system-ui,-apple-system,sans-serif">
@@ -169,21 +209,26 @@ serve(async (req) => {
 </div>
 </body></html>`;
 
-      await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${RESEND_API_KEY}`,
-        },
-        body: JSON.stringify({
-          from: "Reserve Seat <onboarding@resend.dev>",
-          to: ADMIN_EMAIL,
-          subject: `📬 New request: ${cleanName} — ${formattedDate}`,
-          html: adminHtml,
-        }),
+      await transporter.sendMail({
+        from: `Reserve Seat <${SMTP_USER}>`,
+        to: ADMIN_EMAIL,
+        subject: `📬 New request: ${cleanName} — ${formattedDate}`,
+        html: adminHtml,
       });
     } catch (emailErr) {
-      console.error("Admin notification failed:", emailErr);
+      // Non-blocking: log error but don't roll back the reservation
+      console.error("Email notification failed:", emailErr);
+      try {
+        await supabase.from("pii_access_log").insert({
+          admin_user_id: "00000000-0000-0000-0000-000000000000",
+          action: "email_send_failure",
+          table_name: "reservations",
+          record_count: 1,
+          metadata: { error: String(emailErr), reservation_id: reservation.id },
+        });
+      } catch (_) {
+        // Swallow logging errors
+      }
     }
 
     return jsonResponse({ success: true, reservation_id: reservation.id });

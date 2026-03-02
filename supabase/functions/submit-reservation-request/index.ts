@@ -128,7 +128,7 @@ serve(async (req) => {
         last_name: "",
         phone_number: "",
         city: "",
-        tshirt_option: "",
+        tshirt_option: null,
         status: "pending",
         user_id: user_id || null,
         workshop_id: null,

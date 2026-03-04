@@ -1,127 +1,79 @@
-## Fix: Apply Missing Fields and Visual Upgrades to the Active Form
 
-### Root Cause
 
-The homepage (`/`) renders `WorkshopCalendar.tsx`, which contains its own inline reservation form. The fully upgraded `ReservationForm.tsx` (with phone number, T-shirt radio group, Framer Motion animations, Lucide icons) exists but is **not used anywhere in the app** -- it was commented out in `Index.tsx`.
+## Global Theme Overhaul + Booking Form Updates
 
-### Solution
+### Summary
+Replace the current dark-primary theme with the new blue-based color palette extracted from the SVG, and update the booking form button text and add a no-commitment info banner.
 
-Update `WorkshopCalendar.tsx` to include the missing fields, validation, cancellation text, and visual enhancements -- matching all the requirements that were previously only applied to the unused `ReservationForm.tsx`.
+### 1. Update CSS Variables (`src/index.css`)
 
-### Changes to `src/components/WorkshopCalendar.tsx`
+Replace all `:root` CSS custom properties with values derived from the new palette:
 
-**1. Add missing form fields to the inline reservation form:**
+| Variable | New HSL Value | Hex Equivalent |
+|---|---|---|
+| `--primary` | `214 100% 58%` | #277EFF |
+| `--primary-foreground` | `0 0% 100%` | white |
+| `--foreground` | `215 28% 27%` | #334155 |
+| `--card-foreground` | `215 28% 27%` | #334155 |
+| `--popover-foreground` | `215 28% 27%` | #334155 |
+| `--muted-foreground` | `0 0% 46%` | #757575 |
+| `--secondary` | `220 20% 97%` | #F8F9FB |
+| `--muted` | `220 20% 97%` | #F8F9FB |
+| `--accent` | `220 20% 97%` | #F8F9FB |
+| `--border` | `0 0% 91%` | #E8E8E8 |
+| `--input` | `0 0% 91%` | #E8E8E8 |
+| `--ring` | `214 100% 58%` | #277EFF |
+| `--destructive` | `0 100% 50%` | #FF0004 |
 
-- **Phone Number** (required): `<Input>` with phone validation, `Phone` Lucide icon
-- **T-Shirt Option** (required): `RadioGroup` with two options:
-  - `"own"` -- "I am bringing my own T-shirt"
-  - `"buy_onsite"` -- "I will buy a T-shirt onsite"
+Also remove `class="dark"` from `<html>` in `index.html` if present.
 
-**2. Add cancellation policy text:**
+### 2. Update Button Styles (`src/components/ui/button.tsx`)
 
-- Below the submit button, add muted text with `Info` icon: "Note: Reservations can be cancelled up to 24 hours before the event..."
+Change the default variant hover to a slightly darker blue:
+- `default`: `bg-primary text-primary-foreground hover:bg-[#1a6fe0]`
+- `outline`: `border border-primary text-primary bg-background hover:bg-primary/5`
+- Add `rounded-lg` to base styles for rounded corners
 
-**3. Pass new fields to the Edge Function:**
+### 3. Update Homepage (`src/pages/Index.tsx`)
 
-- Add `phone_number` and `tshirt_option` to the `submit-reservation-request` invocation body
-- The Edge Function already validates these fields
+- **Hero section**: Apply indigo gradient background `bg-gradient-to-r from-[#4F46E5] to-[#818CF8]` with white text
+- **Footer**: Dark slate background `bg-[#334155]` with white text
+- **Nav header**: White background, `text-[#334155]` for text, primary blue for active/hover
+- **Section alternation**: Use `bg-[#F8F9FB]` for alternating sections
 
-**4. Add Lucide icons inside existing inputs:**
+### 4. Update Booking Form (`src/components/WorkshopCalendar.tsx`)
 
-- Name field: `User` icon
-- Email field: `Mail` icon
-- Phone field: `Phone` icon
-- Wrap inputs in relative containers with `pl-10` padding
+- **Button text**: Change "Submit Request" to "Request Details & Spot"
+- **No-commitment note**: Add info banner below the button with `border-l-4 border-[#277EFF] bg-[#EEF5FF]` containing italic text: *"No payment required now. We'll email you the price and location details for your selected date."*
+- **Input focus styles**: Change amber focus ring to `focus-visible:ring-[#277EFF]/30 focus-visible:border-[#277EFF]`
 
-**5. Apply Framer Motion animations:**
+### 5. Update All Other Pages
 
-- Import `motion` from `framer-motion`
-- Wrap the form card with fade+slide-up animation
-- Stagger field entrances with 0.1s delays
+Apply consistent theme across:
+- **Auth.tsx**: Update gradient, keep card white with new border color
+- **AdminLogin.tsx**: Same treatment
+- **AdminResetPassword.tsx**: Same treatment
+- **Admin.tsx**: Header white bg, dark slate text, primary blue accents
+- **PrivacyPolicy.tsx / TermsOfService.tsx**: Updated gradients and heading colors
+- **NotFound.tsx**: Consistent with new palette
 
-**6. Apply Playfair Display serif font:**
+### 6. Fix `index.html`
 
-- Use `font-serif` class on "Request a Reservation" heading (font is already loaded in `index.html` and configured in `tailwind.config.ts`)
-
-### Changes to `supabase/functions/submit-reservation-request/index.ts`
-
-- Verify that `phone_number` and `tshirt_option` from the request body are correctly handled (they should already be validated from previous work -- just confirm the guest-request code path uses them in the DB insert)
-
-### No changes needed
-
-- `ReservationForm.tsx` -- remains as a secondary form for authenticated users (accessed via `/auth` flow). No changes needed.
-- `index.html`, `tailwind.config.ts` -- Playfair Display font and Framer Motion are already configured.
+Remove `class="dark"` from `<html>` tag (line 2) -- this forces dark mode and overrides the light theme.
 
 ---
 
-### Technical Details
+### Files to modify
+- `index.html` -- remove `class="dark"`
+- `src/index.css` -- new CSS variable values
+- `src/components/ui/button.tsx` -- updated variant styles
+- `src/pages/Index.tsx` -- hero gradient, footer dark bg, nav styling
+- `src/components/WorkshopCalendar.tsx` -- button text, info banner, focus colors
+- `src/pages/Auth.tsx` -- consistent gradients/colors
+- `src/pages/Admin.tsx` -- header/accent colors
+- `src/pages/AdminLogin.tsx` -- consistent theme
+- `src/pages/AdminResetPassword.tsx` -- consistent theme
+- `src/pages/PrivacyPolicy.tsx` -- consistent theme
+- `src/pages/TermsOfService.tsx` -- consistent theme
+- `src/pages/NotFound.tsx` -- consistent theme
 
-**New state variables in WorkshopCalendar:**
-
-```typescript
-const [phone, setPhone] = useState("");
-const [tshirtOption, setTshirtOption] = useState<"own" | "buy_onsite" | "">("");
-```
-
-**Validation before submit:**
-
-```typescript
-if (!phone.trim() || !/^[+]?[\d\s\-().]{7,20}$/.test(phone.trim())) {
-  toast({ title: "Invalid phone", description: "Please enter a valid phone number.", variant: "destructive" });
-  return;
-}
-if (!tshirtOption) {
-  toast({ title: "T-shirt option required", description: "Please select a T-shirt option.", variant: "destructive" });
-  return;
-}
-```
-
-**Edge function body update:**
-
-```typescript
-body: {
-  requester_name: name.trim(),
-  requester_email: email.trim(),
-  requested_date: requestedDate,
-  message: message.trim() || null,
-  phone_number: phone.trim(),
-  tshirt_option: tshirtOption,
-  honeypot,
-  user_id: null,
-}
-```
-
-**New imports:**
-
-```typescript
-import { motion } from "framer-motion";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Info, User as UserIcon, Mail, Phone as PhoneIcon, Shirt } from "lucide-react";
-```
-
-**Files to modify:**
-
-- `src/components/WorkshopCalendar.tsx` (add fields, icons, animations, cancellation text)
-- `supabase/functions/submit-reservation-request/index.ts` (verify guest path handles phone_number and tshirt_option in insert)  
-{
-    "priority": "IMMEDIATE_UI_REPLACEMENT",
-    "status": "CRITICAL",
-    "observation": "The upgraded ReservationForm.tsx is NOT being used. The homepage is currently rendering an old, dull form inside WorkshopCalendar.tsx.",
-    "task": "Migrate all 'Vibe' upgrades into WorkshopCalendar.tsx immediately.",
-    "requirements": [
-      {
-        "id": "field_sync",
-        "instruction": "Add the mandatory 'Phone Number' (Input) and 'T-Shirt Option' (RadioGroup: 'own'/'buy_onsite') directly into the reservation form inside WorkshopCalendar.tsx. These must be required before the 'Request Reservation' button becomes active."
-      },
-      {
-        "id": "visual_sync",
-        "instruction": "Apply the Framer Motion 'whileInView' scroll animations and the 'Playfair Display' serif font to the headings inside WorkshopCalendar.tsx.",
-        "icons": "Add Lucide icons (User, Mail, Phone, Shirt) as absolute-positioned decorators inside the inputs with 'pl-10' padding."
-      },
-      {
-        "id": "submission_logic",
-        "instruction": "Update the 'handleGuestRequest' function in WorkshopCalendar.tsx to include the 'phone' and 'tshirtOption' state variables in the fetch body sent to the Edge Function."
-      }
-    ],
-    "technical_warning": "Do not create a new file. Modify the existing WorkshopCalendar.tsx so the changes are visible on the homepage (/). Ensure the 'Info' icon and cancellation text are added below the submit button."
-  }

@@ -408,7 +408,7 @@ export default function WorkshopCalendar() {
                       <motion.div custom={5} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }}>
                         <Button
                           type="submit"
-                          className="w-full"
+                          className="w-full bg-gradient-to-r from-[#4F46E5] to-[#818CF8] hover:from-[#4338CA] hover:to-[#6D71F0] text-white shadow-[0_4px_12px_-2px_rgba(79,70,229,0.3)]"
                           disabled={submitting}
                         >
                           {submitting ? (

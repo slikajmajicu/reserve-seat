@@ -4,9 +4,9 @@ import WorkshopCalendar from "@/components/WorkshopCalendar";
 
 export default function Index() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-secondary">
       {/* Header */}
-      <header className="border-b border-border bg-background">
+      <header className="bg-background border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Calendar className="h-8 w-8 text-primary" />
@@ -23,32 +23,33 @@ export default function Index() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-[#4F46E5] to-[#818CF8] text-white">
-        <div className="container mx-auto px-4 py-20 text-center">
-          <div className="max-w-3xl mx-auto space-y-6">
-            <h1 className="text-5xl font-bold tracking-tight font-heading">
-              T-Shirt Printing Workshops in Belgrade
-            </h1>
-            <p className="text-xl text-white/85 font-body">
-              Join our hands-on screen printing workshops. Pick a date, request
-              a spot, and we'll confirm your reservation by email.
-            </p>
-          </div>
+      {/* Hero Section — clean, no gradient bg */}
+      <section className="container mx-auto px-4 py-20 text-center">
+        <div className="max-w-3xl mx-auto space-y-6">
+          <h1 className="text-5xl font-bold tracking-tight font-heading text-foreground">
+            T-Shirt Printing Workshops in Belgrade
+          </h1>
+          <p className="text-xl text-muted-foreground font-body">
+            Join our hands-on screen printing workshops. Pick a date, request
+            a spot, and we'll confirm your reservation by email.
+          </p>
         </div>
       </section>
 
-      {/* Upcoming Workshops Calendar */}
-      <section className="bg-secondary">
-        <div className="container mx-auto px-4 py-16">
-          <h2 className="text-3xl font-bold text-center mb-4 font-heading text-foreground">
-            Upcoming Workshops
-          </h2>
-          <p className="text-center text-muted-foreground mb-10 max-w-xl mx-auto">
-            Browse available dates and request your spot — no account needed.
-          </p>
-          <div className="max-w-4xl mx-auto">
-            <WorkshopCalendar />
+      {/* Upcoming Workshops — glassmorphism card */}
+      <section className="container mx-auto px-4 pb-20">
+        <div className="max-w-5xl mx-auto relative">
+          {/* Glassmorphism container */}
+          <div className="rounded-3xl border border-border/60 bg-white/40 backdrop-blur-[100px] shadow-[0_8px_60px_-12px_rgba(79,70,229,0.08)] p-8 md:p-12">
+            <h2 className="text-3xl font-bold text-center mb-4 font-heading text-foreground">
+              Upcoming Workshops
+            </h2>
+            <p className="text-center text-muted-foreground mb-10 max-w-xl mx-auto">
+              Browse available dates and request your spot — no account needed.
+            </p>
+            <div className="max-w-4xl mx-auto">
+              <WorkshopCalendar />
+            </div>
           </div>
         </div>
       </section>

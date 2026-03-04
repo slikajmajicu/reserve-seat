@@ -319,7 +319,7 @@ export default function WorkshopCalendar() {
                             onChange={(e) => setName(e.target.value)}
                             required
                             maxLength={100}
-                            className="pl-10 h-11 transition-all focus-visible:ring-2 focus-visible:ring-amber-500/30 focus-visible:border-amber-600"
+                            className="pl-10 h-11 transition-all focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary"
                           />
                         </div>
                       </motion.div>
@@ -337,7 +337,7 @@ export default function WorkshopCalendar() {
                             onChange={(e) => setEmail(e.target.value)}
                             required
                             maxLength={255}
-                            className="pl-10 h-11 transition-all focus-visible:ring-2 focus-visible:ring-amber-500/30 focus-visible:border-amber-600"
+                            className="pl-10 h-11 transition-all focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary"
                           />
                         </div>
                       </motion.div>
@@ -355,7 +355,7 @@ export default function WorkshopCalendar() {
                             onChange={(e) => setPhone(e.target.value)}
                             required
                             maxLength={20}
-                            className="pl-10 h-11 transition-all focus-visible:ring-2 focus-visible:ring-amber-500/30 focus-visible:border-amber-600"
+                            className="pl-10 h-11 transition-all focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary"
                           />
                         </div>
                       </motion.div>
@@ -401,7 +401,7 @@ export default function WorkshopCalendar() {
                           onChange={(e) => setMessage(e.target.value)}
                           maxLength={500}
                           rows={3}
-                          className="transition-all focus-visible:ring-2 focus-visible:ring-amber-500/30 focus-visible:border-amber-600"
+                          className="transition-all focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary"
                         />
                       </motion.div>
 
@@ -419,13 +419,20 @@ export default function WorkshopCalendar() {
                           ) : (
                             <>
                               <Send className="h-4 w-4 mr-2" />
-                              Submit Request
+                              Request Details &amp; Spot
                             </>
                           )}
                         </Button>
 
+                        {/* No-commitment info banner */}
+                        <div className="mt-4 border-l-4 border-primary bg-[#EEF5FF] rounded-r-lg px-4 py-3">
+                          <p className="text-sm italic text-muted-foreground">
+                            No payment required now. We'll email you the price and location details for your selected date.
+                          </p>
+                        </div>
+
                         {/* Cancellation policy */}
-                        <div className="flex items-start gap-2 mt-4 text-xs text-muted-foreground">
+                        <div className="flex items-start gap-2 mt-3 text-xs text-muted-foreground">
                           <Info className="h-4 w-4 mt-0.5 shrink-0" />
                           <p>
                             Note: Reservations can be cancelled up to 24 hours before the event. Cancellations on the day of the event may incur a participation fee.

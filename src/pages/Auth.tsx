@@ -147,14 +147,14 @@ export default function Auth() {
 
   if (checkingAuth) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center">
+      <div className="min-h-screen bg-secondary flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 py-12 px-4">
+      <div className="min-h-screen bg-secondary py-12 px-4">
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-2 mb-2">

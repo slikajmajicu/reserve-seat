@@ -397,7 +397,7 @@ export default function WorkshopCalendar() {
                   <motion.div custom={4} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }} className="space-y-1.5">
                     <Label htmlFor="res-message" className="text-[13px] font-medium text-foreground">
                       {t("label_message")}{" "}
-                      <span className="text-[#9ca3af] font-normal">{t("label_optional")}</span>
+                      <span className="text-foreground font-normal">{t("label_optional")}</span>
                     </Label>
                     <Textarea
                       id="res-message"

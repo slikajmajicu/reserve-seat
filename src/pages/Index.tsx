@@ -54,7 +54,7 @@ export default function Index() {
             }}>
             
             <h2 className="text-[22px] font-bold text-center text-[#1a1a1a] font-heading">{t("upcoming_title")}</h2>
-            <p className="text-center text-sm text-[#9ca3af] mt-1.5 mb-6 max-w-xl mx-auto">
+            <p className="text-center text-sm text-foreground mt-1.5 mb-6 max-w-xl mx-auto">
               {t("upcoming_subtitle")}
             </p>
             <WorkshopCalendar />

@@ -9,19 +9,19 @@ export default function LanguageSwitcher() {
         onClick={() => setLanguage("en")}
         className={`px-2 py-1 rounded transition-colors ${
           language === "en"
-            ? "text-primary font-semibold"
-            : "text-[#6b7280] hover:text-[#1a1a1a]"
+            ? "text-foreground font-semibold"
+            : "text-muted-foreground hover:text-foreground"
         }`}
       >
         EN
       </button>
-      <span className="text-[#d1d5db]">|</span>
+      <span className="text-foreground">|</span>
       <button
         onClick={() => setLanguage("sr")}
         className={`px-2 py-1 rounded transition-colors ${
           language === "sr"
-            ? "text-primary font-semibold"
-            : "text-[#6b7280] hover:text-[#1a1a1a]"
+            ? "text-foreground font-semibold"
+            : "text-muted-foreground hover:text-foreground"
         }`}
       >
         SR

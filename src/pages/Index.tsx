@@ -49,7 +49,15 @@ export default function Index() {
       <section className="container mx-auto px-6 pb-12 flex-1">
         <div className="max-w-[900px] mx-auto space-y-6">
           {/* Workshop card — glassmorphism */}
-          <div className="rounded-[20px] bg-white/75 backdrop-blur-[20px] shadow-[0_4px_32px_rgba(0,0,0,0.08)] p-10">
+          <div
+            className="rounded-[16px] shadow-[0_4px_30px_rgba(0,0,0,0.1)] p-10"
+            style={{
+              background: "rgba(255, 255, 255, 0.11)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              border: "1px solid rgba(255, 255, 255, 0.19)",
+            }}
+          >
             <h2 className="text-[22px] font-bold text-center text-[#1a1a1a] font-heading">Upcoming Workshops</h2>
             <p className="text-center text-sm text-[#9ca3af] mt-1.5 mb-6 max-w-xl mx-auto">
               Browse available dates and request your spot — no account needed.

@@ -61,7 +61,14 @@ export default function Index() {
           </div>
 
           {/* Group Bookings card — glassmorphism */}
-          <div className="rounded-[20px] bg-white/75 backdrop-blur-[20px] shadow-[0_4px_32px_rgba(0,0,0,0.08)] p-10 text-center space-y-3">
+          <div
+            className="rounded-[16px] shadow-[0_4px_30px_rgba(0,0,0,0.1)] p-10 text-center space-y-3"
+            style={{
+              background: "rgba(255, 255, 255, 0.2)",
+              backdropFilter: "blur(5px)",
+              WebkitBackdropFilter: "blur(5px)",
+              border: "1px solid rgba(255, 255, 255, 0.3)"
+            }}>
             <h2 className="text-[22px] font-bold text-[#1a1a1a] font-heading">
               {t("group_title")}
             </h2>

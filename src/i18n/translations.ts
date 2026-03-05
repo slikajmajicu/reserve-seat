@@ -167,7 +167,7 @@ export const translations = {
     hero_tshirt: "Oslikavanje",
     hero_painting: " majica — Radionice ",
     hero_belgrade: "u Beogradu",
-    hero_subtitle: "Pridružite se našim praktičnim radionicama sitotiska. Izaberite datum, zatražite mesto, a mi ćemo vam potvrditi rezervaciju putem email-a.",
+    hero_subtitle: "Pridružite se našim praktičnim radionicama. Izaberite datum, zatražite mesto, a mi ćemo vam potvrditi rezervaciju putem email-a.",
 
     // Workshop card
     upcoming_title: "Predstojeće radionice",

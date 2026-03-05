@@ -310,7 +310,7 @@ export default function WorkshopCalendar() {
 
                   {/* Name */}
                   <motion.div custom={0} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }} className="space-y-1.5">
-                    <Label htmlFor="res-name" className="text-[13px] font-medium text-primary">
+                    <Label htmlFor="res-name" className="text-[13px] font-medium text-foreground">
                       {t("label_name")}
                     </Label>
                     <div className="relative">
@@ -329,7 +329,7 @@ export default function WorkshopCalendar() {
 
                   {/* Email */}
                   <motion.div custom={1} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }} className="space-y-1.5">
-                    <Label htmlFor="res-email" className="text-[13px] font-medium text-primary">
+                    <Label htmlFor="res-email" className="text-[13px] font-medium text-foreground">
                       {t("label_email")}
                     </Label>
                     <div className="relative">
@@ -349,7 +349,7 @@ export default function WorkshopCalendar() {
 
                   {/* Phone */}
                   <motion.div custom={2} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }} className="space-y-1.5">
-                    <Label htmlFor="res-phone" className="text-[13px] font-medium text-primary">
+                    <Label htmlFor="res-phone" className="text-[13px] font-medium text-foreground">
                       {t("label_phone")}
                     </Label>
                     <div className="relative">
@@ -369,7 +369,7 @@ export default function WorkshopCalendar() {
 
                   {/* T-Shirt Option */}
                   <motion.div custom={3} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }} className="space-y-2">
-                    <Label className="flex items-center gap-1.5 text-[13px] font-medium text-primary">
+                    <Label className="flex items-center gap-1.5 text-[13px] font-medium text-foreground">
                       <Shirt className="h-3.5 w-3.5" />
                       {t("label_tshirt")}
                     </Label>
@@ -395,7 +395,7 @@ export default function WorkshopCalendar() {
 
                   {/* Message */}
                   <motion.div custom={4} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }} className="space-y-1.5">
-                    <Label htmlFor="res-message" className="text-[13px] font-medium text-primary">
+                    <Label htmlFor="res-message" className="text-[13px] font-medium text-foreground">
                       {t("label_message")}{" "}
                       <span className="text-[#9ca3af] font-normal">{t("label_optional")}</span>
                     </Label>

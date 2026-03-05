@@ -26,6 +26,17 @@ export default function LanguageSwitcher() {
       >
         SR
       </button>
+      <span className="text-foreground">|</span>
+      <button
+        onClick={() => setLanguage("ru")}
+        className={`px-2 py-1 rounded transition-colors ${
+          language === "ru"
+            ? "text-foreground font-semibold"
+            : "text-muted-foreground hover:text-foreground"
+        }`}
+      >
+        RU
+      </button>
     </div>
   );
 }

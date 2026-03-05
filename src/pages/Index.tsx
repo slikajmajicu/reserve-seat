@@ -33,13 +33,11 @@ export default function Index() {
 
       {/* Hero Section */}
       <section className="container mx-auto px-6 pt-12 pb-8 text-center">
-        <div className="max-w-3xl mx-auto space-y-3">
-          <div className="flex items-baseline justify-center flex-wrap gap-x-3">
-            <h1 className="text-[42px] leading-tight font-extrabold font-heading text-[#1a1a1a] text-center">
-              <span className="italic">T-Shirt</span> Painting Workshops{" "}
-              <span className="text-[28px] font-medium text-[#4a4a4a]">in Belgrade</span>
-            </h1>
-          </div>
+        <div className="mx-auto space-y-3">
+          <h1 className="text-[42px] leading-tight font-extrabold font-heading text-[#1a1a1a] whitespace-nowrap">
+            <span className="italic">T-Shirt</span> Painting Workshops{" "}
+            <span className="text-[28px] font-medium text-[#4a4a4a]">in Belgrade</span>
+          </h1>
           <p className="text-[15px] text-[#6b7280] leading-relaxed max-w-[480px] mx-auto">
             Join our hands-on screen printing workshops. Pick a date, request a spot, and we'll confirm your reservation
             by email.

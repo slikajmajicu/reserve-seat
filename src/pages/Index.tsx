@@ -4,7 +4,7 @@ import WorkshopCalendar from "@/components/WorkshopCalendar";
 
 export default function Index() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-[url('/images/background.jpg')] bg-center bg-no-repeat bg-cover">
       {/* Header — transparent */}
       <header className="py-4 px-8">
         <div className="container mx-auto flex items-center justify-between">

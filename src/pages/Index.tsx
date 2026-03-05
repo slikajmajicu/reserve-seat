@@ -9,7 +9,13 @@ export default function Index() {
 
   return (
     <div
-      className="min-h-screen flex flex-col relative overflow-hidden bg-[url('/background.jpg')] bg-center bg-no-repeat bg-cover">
+      className="min-h-screen flex flex-col relative overflow-hidden">
+      {/* Blurred background layer */}
+      <div
+        className="absolute inset-0 bg-[url('/background.jpg')] bg-center bg-no-repeat bg-cover"
+        style={{ filter: "blur(14px)", transform: "scale(1.05)" }}
+        aria-hidden="true"
+      />
       
       {/* Header — transparent */}
       <header className="py-4 px-8">

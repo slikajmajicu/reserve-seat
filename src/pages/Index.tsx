@@ -1,32 +1,28 @@
 import { Link } from "react-router-dom";
 import { Calendar } from "lucide-react";
 import WorkshopCalendar from "@/components/WorkshopCalendar";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 export default function Index() {
+  const { t } = useLanguage();
+
   return (
     <div
-      className="min-h-screen flex flex-col relative overflow-hidden"
-      style={{
-        background: `
-      radial-gradient(ellipse at 0% 0%, rgba(255, 160, 100, 0.5) 0%, transparent 50%),
-      radial-gradient(ellipse at 100% 20%, rgba(100, 120, 255, 0.45) 0%, transparent 50%),
-      radial-gradient(ellipse at 60% 10%, rgba(180, 150, 255, 0.3) 0%, transparent 40%),
-      radial-gradient(ellipse at 30% 5%, rgba(255, 100, 120, 0.2) 0%, transparent 35%),
-      #f0f0f3
-    `,
-      }}
+      className="min-h-screen flex flex-col relative overflow-hidden bg-[url('/images/background.jpg')] bg-center bg-no-repeat bg-cover"
     >
       {/* Header — transparent */}
       <header className="py-4 px-8">
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Calendar className="h-5 w-5 text-primary" />
-            <span className="text-base font-semibold text-[#1a1a1a]">reserve-seat</span>
+            <span className="text-base font-semibold text-[#1a1a1a]">{t("brand")}</span>
           </div>
-          <nav>
+          <nav className="flex items-center gap-4">
             <Link to="/privacy-policy" className="text-sm text-[#1a1a1a] hover:text-primary transition-colors">
-              Privacy Policy
+              {t("nav_privacy")}
             </Link>
+            <LanguageSwitcher />
           </nav>
         </div>
       </header>
@@ -35,12 +31,11 @@ export default function Index() {
       <section className="container mx-auto px-6 pt-12 pb-8 text-center">
         <div className="mx-auto space-y-3">
           <h1 className="text-[42px] leading-tight font-extrabold font-heading text-[#1a1a1a] whitespace-nowrap">
-            <span className="italic">T-Shirt</span> Painting Workshops{" "}
-            <span className="text-[28px] font-medium text-[#4a4a4a]">in Belgrade</span>
+            <span className="italic">{t("hero_tshirt")}</span>{t("hero_painting")}
+            <span className="text-[28px] font-medium text-[#4a4a4a]">{t("hero_belgrade")}</span>
           </h1>
           <p className="text-[15px] text-[#6b7280] leading-relaxed max-w-[480px] mx-auto">
-            Join our hands-on screen printing workshops. Pick a date, request a spot, and we'll confirm your reservation
-            by email.
+            {t("hero_subtitle")}
           </p>
         </div>
       </section>
@@ -58,9 +53,9 @@ export default function Index() {
               border: "1px solid rgba(255, 255, 255, 0.19)",
             }}
           >
-            <h2 className="text-[22px] font-bold text-center text-[#1a1a1a] font-heading">Upcoming Workshops</h2>
+            <h2 className="text-[22px] font-bold text-center text-[#1a1a1a] font-heading">{t("upcoming_title")}</h2>
             <p className="text-center text-sm text-[#9ca3af] mt-1.5 mb-6 max-w-xl mx-auto">
-              Browse available dates and request your spot — no account needed.
+              {t("upcoming_subtitle")}
             </p>
             <WorkshopCalendar />
           </div>
@@ -68,10 +63,10 @@ export default function Index() {
           {/* Group Bookings card — glassmorphism */}
           <div className="rounded-[20px] bg-white/75 backdrop-blur-[20px] shadow-[0_4px_32px_rgba(0,0,0,0.08)] p-10 text-center space-y-3">
             <h2 className="text-[22px] font-bold text-[#1a1a1a] font-heading">
-              Group Bookings, Team Building &amp; Gift Vouchers
+              {t("group_title")}
             </h2>
             <p className="text-[15px] text-[#6b7280]">
-              Planning a team event or looking for a unique gift? Get in touch at
+              {t("group_text")}
             </p>
             <a
               href="mailto:slikajmajicu@gmail.com"
@@ -88,15 +83,15 @@ export default function Index() {
         <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-primary" />
-            <span className="text-sm font-semibold text-[#1a1a1a]">reserve-seat</span>
+            <span className="text-sm font-semibold text-[#1a1a1a]">{t("brand")}</span>
           </div>
-          <p className="text-[13px] text-[#9ca3af]">© 2026 reserve-seat. Workshop reservation made simple.</p>
+          <p className="text-[13px] text-[#9ca3af]">{t("footer_copy")}</p>
           <div className="flex gap-4 text-[13px]">
             <Link to="/privacy-policy" className="text-[#6b7280] hover:text-primary transition-colors">
-              Privacy Policy
+              {t("nav_privacy")}
             </Link>
             <Link to="/terms-of-service" className="text-[#6b7280] hover:text-primary transition-colors">
-              Terms of Service
+              {t("footer_terms")}
             </Link>
           </div>
         </div>

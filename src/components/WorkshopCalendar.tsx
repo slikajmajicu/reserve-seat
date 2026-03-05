@@ -11,6 +11,7 @@ import { Clock, Users, CalendarDays, Send, Loader2, AlertCircle, User as UserIco
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 type Workshop = {
   id: string;
@@ -33,6 +34,7 @@ const fieldVariants = {
 };
 
 export default function WorkshopCalendar() {
+  const { t, language } = useLanguage();
   const [workshops, setWorkshops] = useState<Workshop[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [name, setName] = useState("");
@@ -76,12 +78,14 @@ export default function WorkshopCalendar() {
       )
     : [];
 
+  const dateLocale = language === "sr" ? "sr-Latn" : "en-US";
+
   const formatTime = (time: string | null) => {
     if (!time) return null;
-    return new Date(`2000-01-01T${time}`).toLocaleTimeString("en-US", {
+    return new Date(`2000-01-01T${time}`).toLocaleTimeString(dateLocale, {
       hour: "numeric",
       minute: "2-digit",
-      hour12: true,
+      hour12: language === "en",
     });
   };
 
@@ -90,8 +94,8 @@ export default function WorkshopCalendar() {
 
     if (!selectedDate || !name.trim() || !email.trim()) {
       toast({
-        title: "Missing fields",
-        description: "Please fill in your name, email, and select a date.",
+        title: t("toast_missing_title"),
+        description: t("toast_missing_desc"),
         variant: "destructive",
       });
       return;
@@ -99,8 +103,8 @@ export default function WorkshopCalendar() {
 
     if (!phone.trim() || !/^[+]?[\d\s\-().]{7,20}$/.test(phone.trim())) {
       toast({
-        title: "Invalid phone number",
-        description: "Please enter a valid phone number.",
+        title: t("toast_phone_title"),
+        description: t("toast_phone_desc"),
         variant: "destructive",
       });
       return;
@@ -108,8 +112,8 @@ export default function WorkshopCalendar() {
 
     if (!tshirtOption) {
       toast({
-        title: "T-shirt option required",
-        description: "Please select a T-shirt option.",
+        title: t("toast_tshirt_title"),
+        description: t("toast_tshirt_desc"),
         variant: "destructive",
       });
       return;
@@ -146,22 +150,21 @@ export default function WorkshopCalendar() {
         setTshirtOption("");
         setMessage("");
         toast({
-          title: "Request submitted!",
-          description:
-            "We'll review your reservation request and get back to you soon.",
+          title: t("toast_success_title"),
+          description: t("toast_success_desc"),
         });
       } else {
         toast({
-          title: "Could not submit",
-          description: data?.error || "Something went wrong. Please try again.",
+          title: t("toast_fail_title"),
+          description: data?.error || t("toast_fail_desc"),
           variant: "destructive",
         });
       }
     } catch (err: any) {
       console.error("Reservation submit error:", err);
       toast({
-        title: "Error",
-        description: "Something went wrong. Please try again later.",
+        title: t("toast_error_title"),
+        description: t("toast_error_desc"),
         variant: "destructive",
       });
     } finally {
@@ -195,7 +198,7 @@ export default function WorkshopCalendar() {
         {selectedDate ? (
           <>
             <h3 className="text-xl font-bold text-[#1a1a1a] font-heading">
-              {selectedDate.toLocaleDateString("en-US", {
+              {selectedDate.toLocaleDateString(dateLocale, {
                 weekday: "long",
                 month: "long",
                 day: "numeric",
@@ -216,12 +219,12 @@ export default function WorkshopCalendar() {
                   >
                     <div className="space-y-1">
                       <h4 className="text-[15px] font-semibold text-[#1a1a1a]">
-                        {workshop.title || "Workshop Session"}
+                        {workshop.title || t("workshop_session")}
                       </h4>
                       <div className="flex items-center gap-1.5 text-[13px] text-[#9ca3af]">
                         <Users className="h-[13px] w-[13px]" />
                         <span>
-                          {workshop.reserved_count} / {workshop.max_capacity} booked
+                          {workshop.reserved_count} / {workshop.max_capacity} {t("booked")}
                         </span>
                       </div>
                       {(startFormatted || endFormatted) && (
@@ -243,8 +246,8 @@ export default function WorkshopCalendar() {
                       )}
                     >
                       {available > 0
-                        ? `${available} seats left !`
-                        : "Full"}
+                        ? `${available} ${t("seats_left")}`
+                        : t("full")}
                     </Badge>
                   </div>
                 );
@@ -254,10 +257,10 @@ export default function WorkshopCalendar() {
             {submitted ? (
               <div className="bg-primary/5 border border-primary/20 rounded-xl p-6 text-center space-y-2">
                 <h4 className="font-bold text-lg text-[#1a1a1a]">
-                  ✅ Request Submitted!
+                  {t("submitted_title")}
                 </h4>
                 <p className="text-sm text-[#9ca3af]">
-                  Check your email for confirmation. We'll review your request and get back to you shortly.
+                  {t("submitted_text")}
                 </p>
                 <Button
                   type="button"
@@ -266,7 +269,7 @@ export default function WorkshopCalendar() {
                   className="mt-3"
                   onClick={() => setSubmitted(false)}
                 >
-                  Submit another request
+                  {t("submitted_another")}
                 </Button>
               </div>
             ) : (
@@ -278,7 +281,7 @@ export default function WorkshopCalendar() {
               >
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <h4 className="text-lg font-bold text-[#1a1a1a] font-heading">
-                    Request a Reservation
+                    {t("form_title")}
                   </h4>
 
                   {/* Honeypot — invisible to real users */}
@@ -308,13 +311,13 @@ export default function WorkshopCalendar() {
                   {/* Name */}
                   <motion.div custom={0} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }} className="space-y-1.5">
                     <Label htmlFor="res-name" className="text-[13px] font-medium text-primary">
-                      Your Name
+                      {t("label_name")}
                     </Label>
                     <div className="relative">
                       <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9ca3af]" />
                       <Input
                         id="res-name"
-                        placeholder="Full name"
+                        placeholder={t("placeholder_name")}
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         required
@@ -327,14 +330,14 @@ export default function WorkshopCalendar() {
                   {/* Email */}
                   <motion.div custom={1} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }} className="space-y-1.5">
                     <Label htmlFor="res-email" className="text-[13px] font-medium text-primary">
-                      Email
+                      {t("label_email")}
                     </Label>
                     <div className="relative">
                       <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9ca3af]" />
                       <Input
                         id="res-email"
                         type="email"
-                        placeholder="you@example.com"
+                        placeholder={t("placeholder_email")}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
@@ -347,14 +350,14 @@ export default function WorkshopCalendar() {
                   {/* Phone */}
                   <motion.div custom={2} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }} className="space-y-1.5">
                     <Label htmlFor="res-phone" className="text-[13px] font-medium text-primary">
-                      Phone Number
+                      {t("label_phone")}
                     </Label>
                     <div className="relative">
                       <PhoneIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9ca3af]" />
                       <Input
                         id="res-phone"
                         type="tel"
-                        placeholder="+381 63 123 4567"
+                        placeholder={t("placeholder_phone")}
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         required
@@ -368,7 +371,7 @@ export default function WorkshopCalendar() {
                   <motion.div custom={3} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }} className="space-y-2">
                     <Label className="flex items-center gap-1.5 text-[13px] font-medium text-primary">
                       <Shirt className="h-3.5 w-3.5" />
-                      T-Shirt Option
+                      {t("label_tshirt")}
                     </Label>
                     <RadioGroup
                       value={tshirtOption}
@@ -378,13 +381,13 @@ export default function WorkshopCalendar() {
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="own" id="tshirt-own" />
                         <Label htmlFor="tshirt-own" className="font-normal cursor-pointer text-sm text-[#374151]">
-                          I am bringing my own T-shirt
+                          {t("tshirt_own")}
                         </Label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="buy_onsite" id="tshirt-buy" />
                         <Label htmlFor="tshirt-buy" className="font-normal cursor-pointer text-sm text-[#374151]">
-                          I will buy a T-shirt onsite
+                          {t("tshirt_buy")}
                         </Label>
                       </div>
                     </RadioGroup>
@@ -393,12 +396,12 @@ export default function WorkshopCalendar() {
                   {/* Message */}
                   <motion.div custom={4} initial="hidden" whileInView="visible" variants={fieldVariants} viewport={{ once: true }} className="space-y-1.5">
                     <Label htmlFor="res-message" className="text-[13px] font-medium text-primary">
-                      Message{" "}
-                      <span className="text-[#9ca3af] font-normal">(optional)</span>
+                      {t("label_message")}{" "}
+                      <span className="text-[#9ca3af] font-normal">{t("label_optional")}</span>
                     </Label>
                     <Textarea
                       id="res-message"
-                      placeholder="Any notes or questions..."
+                      placeholder={t("placeholder_message")}
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       maxLength={500}
@@ -416,12 +419,12 @@ export default function WorkshopCalendar() {
                       {submitting ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Submitting…
+                          {t("btn_submitting")}
                         </>
                       ) : (
                         <>
                           <Send className="h-4 w-4 mr-2" />
-                          Submit Request
+                          {t("btn_submit")}
                         </>
                       )}
                     </Button>
@@ -430,7 +433,7 @@ export default function WorkshopCalendar() {
                     <div className="flex items-start gap-2 text-xs text-destructive">
                       <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                       <p className="leading-relaxed">
-                        Note: Reservations can be cancelled up to 24 hours before the event. Cancellations on the day of the event may incur a participation fee.
+                        {t("cancellation_note")}
                       </p>
                     </div>
                   </motion.div>
@@ -441,9 +444,9 @@ export default function WorkshopCalendar() {
         ) : (
           <div className="text-center py-8 text-[#9ca3af]">
             <CalendarDays className="h-10 w-10 mx-auto mb-3 opacity-40" />
-            <p className="font-medium text-[#1a1a1a]">Select a date to view workshops</p>
+            <p className="font-medium text-[#1a1a1a]">{t("select_date")}</p>
             <p className="text-sm mt-1">
-              Highlighted dates have available workshops.
+              {t("highlighted_dates")}
             </p>
           </div>
         )}

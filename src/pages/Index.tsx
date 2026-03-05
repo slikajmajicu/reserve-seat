@@ -4,7 +4,18 @@ import WorkshopCalendar from "@/components/WorkshopCalendar";
 
 export default function Index() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div
+      className="min-h-screen flex flex-col relative overflow-hidden"
+      style={{
+        background: `
+      radial-gradient(ellipse at 0% 0%, rgba(255, 160, 100, 0.5) 0%, transparent 50%),
+      radial-gradient(ellipse at 100% 20%, rgba(100, 120, 255, 0.45) 0%, transparent 50%),
+      radial-gradient(ellipse at 60% 10%, rgba(180, 150, 255, 0.3) 0%, transparent 40%),
+      radial-gradient(ellipse at 30% 5%, rgba(255, 100, 120, 0.2) 0%, transparent 35%),
+      #f0f0f3
+    `,
+      }}
+    >
       {/* Header — transparent */}
       <header className="py-4 px-8">
         <div className="container mx-auto flex items-center justify-between">

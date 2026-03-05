@@ -9,7 +9,7 @@ export default function Index() {
 
   return (
     <div
-      className="min-h-screen flex flex-col relative overflow-hidden bg-[url('/images/background.jpg')] bg-center bg-no-repeat bg-cover"
+      className="min-h-screen flex flex-col relative overflow-hidden bg-[url('/background.jpg')] bg-center bg-no-repeat bg-cover"
     >
       {/* Header — transparent */}
       <header className="py-4 px-8">

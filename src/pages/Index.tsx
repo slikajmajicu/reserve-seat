@@ -9,8 +9,8 @@ export default function Index() {
 
   return (
     <div
-      className="min-h-screen flex flex-col relative overflow-hidden bg-[url('/background.jpg')] bg-center bg-no-repeat bg-cover"
-    >
+      className="min-h-screen flex flex-col relative overflow-hidden bg-[url('/background.jpg')] bg-center bg-no-repeat bg-cover">
+      
       {/* Header — transparent */}
       <header className="py-4 px-8">
         <div className="container mx-auto flex items-center justify-between">
@@ -34,7 +34,7 @@ export default function Index() {
             <span className="italic">{t("hero_tshirt")}</span>{t("hero_painting")}
             <span className="text-[28px] font-medium text-[#4a4a4a]">{t("hero_belgrade")}</span>
           </h1>
-          <p className="text-[15px] text-[#6b7280] leading-relaxed max-w-[480px] mx-auto">
+          <p className="text-[15px] leading-relaxed max-w-[480px] mx-auto text-secondary-foreground">
             {t("hero_subtitle")}
           </p>
         </div>
@@ -50,9 +50,9 @@ export default function Index() {
               background: "rgba(255, 255, 255, 0.11)",
               backdropFilter: "blur(20px)",
               WebkitBackdropFilter: "blur(20px)",
-              border: "1px solid rgba(255, 255, 255, 0.19)",
-            }}
-          >
+              border: "1px solid rgba(255, 255, 255, 0.19)"
+            }}>
+            
             <h2 className="text-[22px] font-bold text-center text-[#1a1a1a] font-heading">{t("upcoming_title")}</h2>
             <p className="text-center text-sm text-[#9ca3af] mt-1.5 mb-6 max-w-xl mx-auto">
               {t("upcoming_subtitle")}
@@ -70,8 +70,8 @@ export default function Index() {
             </p>
             <a
               href="mailto:slikajmajicu@gmail.com"
-              className="text-base font-medium text-primary hover:underline transition-colors"
-            >
+              className="text-base font-medium text-primary hover:underline transition-colors">
+              
               slikajmajicu@gmail.com
             </a>
           </div>
@@ -96,6 +96,6 @@ export default function Index() {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>);
+
 }

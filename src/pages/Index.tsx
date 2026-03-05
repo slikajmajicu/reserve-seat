@@ -9,11 +9,10 @@ export default function Index() {
 
   return (
     <div
-      className="min-h-screen flex flex-col relative overflow-hidden">
-      {/* Blurred background layer */}
+      className="min-h-screen flex flex-col relative overflow-hidden bg-[url('/background.jpg')] bg-center bg-no-repeat bg-cover">
+      {/* Blur overlay */}
       <div
-        className="absolute inset-0 bg-[url('/background.jpg')] bg-center bg-no-repeat bg-cover"
-        style={{ filter: "blur(14px)", transform: "scale(1.05)" }}
+        className="absolute inset-0 backdrop-blur-xl bg-white/30"
         aria-hidden="true"
       />
       

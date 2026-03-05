@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Anon can select pending by email" ON public.reservations;

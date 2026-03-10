@@ -39,7 +39,7 @@ export const translations = {
     placeholder_message: "Any notes or questions...",
     btn_submit: "Submit Request",
     btn_submitting: "Submitting…",
-    cancellation_note: "Note: Reservations can be cancelled up to 24 hours before the event. Cancellations on the day of the event may incur a participation fee.",
+    cancellation_note: "Note: Reservations can be cancelled up to 48 hours before the event. Cancellations on the day of the event may incur a participation fee.",
 
     // Submitted
     submitted_title: "✅ Request Submitted!",
@@ -198,7 +198,7 @@ export const translations = {
     placeholder_message: "Napomene ili pitanja...",
     btn_submit: "Pošalji zahtev",
     btn_submitting: "Slanje…",
-    cancellation_note: "Napomena: Rezervacije se mogu otkazati najkasnije 24 sata pre događaja. Otkazivanje na dan događaja može podrazumevati naknadu za učešće.",
+    cancellation_note: "Napomena: Rezervacije se mogu otkazati najkasnije 48 sati pre događaja. Otkazivanje na dan događaja može podrazumevati naknadu za učešće.",
 
     // Submitted
     submitted_title: "✅ Zahtev poslat!",
@@ -357,7 +357,7 @@ export const translations = {
     placeholder_message: "Заметки или вопросы...",
     btn_submit: "Отправить запрос",
     btn_submitting: "Отправка…",
-    cancellation_note: "Примечание: Бронирование можно отменить не позднее чем за 24 часа до мероприятия. Отмена в день мероприятия может повлечь за собой плату за участие.",
+    cancellation_note: "Примечание: Бронирование можно отменить не позднее чем за 48 часов до мероприятия. Отмена в день мероприятия может повлечь за собой плату за участие.",
 
     // Submitted
     submitted_title: "✅ Запрос отправлен!",

@@ -198,7 +198,7 @@ export const translations = {
     placeholder_message: "Napomene ili pitanja...",
     btn_submit: "Pošalji zahtev",
     btn_submitting: "Slanje…",
-    cancellation_note: "Napomena: Rezervacije se mogu otkazati najkasnije 24 sata pre događaja. Otkazivanje na dan događaja može podrazumevati naknadu za učešće.",
+    cancellation_note: "Napomena: Rezervacije se mogu otkazati najkasnije 48 sati pre događaja. Otkazivanje na dan događaja može podrazumevati naknadu za učešće.",
 
     // Submitted
     submitted_title: "✅ Zahtev poslat!",

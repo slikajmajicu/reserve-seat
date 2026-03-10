@@ -39,7 +39,7 @@ export const translations = {
     placeholder_message: "Any notes or questions...",
     btn_submit: "Submit Request",
     btn_submitting: "Submitting…",
-    cancellation_note: "Note: Reservations can be cancelled up to 24 hours before the event. Cancellations on the day of the event may incur a participation fee.",
+    cancellation_note: "Note: Reservations can be cancelled up to 48 hours before the event. Cancellations on the day of the event may incur a participation fee.",
 
     // Submitted
     submitted_title: "✅ Request Submitted!",
